@@ -1,0 +1,18 @@
+# Ignore IDE files
+.idea/
+.vscode/
+
+# Ignore virtual environments
+/*venv/
+
+# Ignore caches, temp files, etc.
+__pycache__/
+*.pyc
+pytest_cache/
+.DS_Store
+
+# Ignore coverage files
+coverage.xml
+.coverage
+.coverage.*
+.run
