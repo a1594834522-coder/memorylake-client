@@ -6,31 +6,17 @@ Claude Memory SDK 主客户端
 提供了与 Claude API 和记忆工具交互的主要接口。
 """
 
-import logging
 import os
-from typing import List, Dict, Any, Optional, cast
+from typing import List, Dict, Any, Optional, Tuple, cast
 from anthropic import Anthropic
 from anthropic.types.beta import (
-    BetaMessage,
-    BetaMessageParam,
-    BetaContentBlockParam,
-    BetaToolParam,
     BetaContextManagementConfigParam,
-    BetaMemoryTool20250818Param,
-    BetaMemoryTool20250818Command,
-    BetaMemoryTool20250818ViewCommand,
-    BetaMemoryTool20250818CreateCommand,
-    BetaMemoryTool20250818DeleteCommand,
-    BetaMemoryTool20250818InsertCommand,
-    BetaMemoryTool20250818RenameCommand,
-    BetaMemoryTool20250818StrReplaceCommand,
+    BetaMessageParam,
 )
 
 from .memory_backend import BaseMemoryBackend, FileSystemMemoryBackend
 from .exceptions import MemoryAPIError, MemoryBackendError
-
-# 设置日志
-logger = logging.getLogger(__name__)
+from .memory_tool import MemoryBackendTool
 
 # 默认记忆系统提示词
 MEMORY_SYSTEM_PROMPT = """- ***DO NOT just store the conversation history**
@@ -69,6 +55,9 @@ class ClaudeMemoryClient:
         max_tokens: int = 2048,
         context_management: Optional[Dict[str, Any]] = None,
         memory_system_prompt: Optional[str] = None,
+        auto_save_memory: bool = True,
+        use_full_schema: Optional[bool] = None,
+        auto_handle_tool_calls: bool = False,
     ):
         """初始化 Claude Memory 客户端
 
@@ -81,6 +70,9 @@ class ClaudeMemoryClient:
             max_tokens: 最大生成令牌数，默认为 2048
             context_management: 上下文管理配置，如果为 None 则使用默认配置
             memory_system_prompt: 记忆系统提示词，如果为 None 则使用默认提示词
+            auto_save_memory: 是否自动保存记忆到持久化存储，默认为 True
+            use_full_schema: 是否使用完整的 input_schema，None 表示自动检测
+            auto_handle_tool_calls: 是否自动处理工具调用并继续对话，默认为 False
         """
         # 从环境变量获取配置
         api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
@@ -90,10 +82,105 @@ class ClaudeMemoryClient:
         if not api_key:
             raise ValueError("API 密钥未提供，请设置 api_key 参数或 ANTHROPIC_API_KEY 环境变量")
 
+        # 自动检测是否需要完整的 input_schema
+        if use_full_schema is None:
+            # 智能检测：如果使用非官方端点，则使用完整 schema
+            self.use_full_schema = bool(base_url and not base_url.startswith("https://api.anthropic.com"))
+        else:
+            self.use_full_schema = use_full_schema
+
         # 初始化 Anthropic 客户端
         client_kwargs = {"api_key": api_key}
         if base_url:
             client_kwargs["base_url"] = base_url
+
+        tool_overrides: Optional[Dict[str, Any]] = None
+        if self.use_full_schema:
+            tool_overrides = {
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "command": {
+                            "type": "string",
+                            "enum": ["view", "create", "str_replace", "insert", "delete", "rename"],
+                            "description": "要执行的命令类型",
+                        },
+                        "path": {
+                            "type": "string",
+                            "description": "文件或目录路径，必须以 /memories 开头",
+                        },
+                        "view_range": {
+                            "type": "array",
+                            "items": {"type": "integer"},
+                            "minItems": 2,
+                            "maxItems": 2,
+                            "description": "可选的行范围 [start_line, end_line]，仅用于 view 命令",
+                        },
+                        "file_text": {
+                            "type": "string",
+                            "description": "文件内容，用于 create 命令",
+                        },
+                        "old_str": {
+                            "type": "string",
+                            "description": "要替换的旧文本，用于 str_replace 命令",
+                        },
+                        "new_str": {
+                            "type": "string",
+                            "description": "新文本，用于 str_replace 命令",
+                        },
+                        "insert_line": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "插入行号，用于 insert 命令",
+                        },
+                        "insert_text": {
+                            "type": "string",
+                            "description": "要插入的文本，用于 insert 命令",
+                        },
+                        "old_path": {
+                            "type": "string",
+                            "description": "原路径，用于 rename 命令",
+                        },
+                        "new_path": {
+                            "type": "string",
+                            "description": "新路径，用于 rename 命令",
+                        },
+                    },
+                    "required": ["command", "path"],
+                    "allOf": [
+                        {
+                            "if": {"properties": {"command": {"const": "view"}}},
+                            "then": {"required": ["command", "path"]},
+                            "else": True,
+                        },
+                        {
+                            "if": {"properties": {"command": {"const": "create"}}},
+                            "then": {"required": ["command", "path", "file_text"]},
+                            "else": True,
+                        },
+                        {
+                            "if": {"properties": {"command": {"const": "str_replace"}}},
+                            "then": {"required": ["command", "path", "old_str", "new_str"]},
+                            "else": True,
+                        },
+                        {
+                            "if": {"properties": {"command": {"const": "insert"}}},
+                            "then": {"required": ["command", "path", "insert_line", "insert_text"]},
+                            "else": True,
+                        },
+                        {
+                            "if": {"properties": {"command": {"const": "delete"}}},
+                            "then": {"required": ["command", "path"]},
+                            "else": True,
+                        },
+                        {
+                            "if": {"properties": {"command": {"const": "rename"}}},
+                            "then": {"required": ["command", "old_path", "new_path"]},
+                            "else": True,
+                        },
+                    ],
+                }
+            }
 
         self.client = Anthropic(**client_kwargs)
         self.memory_backend = memory_backend or FileSystemMemoryBackend()
@@ -101,11 +188,15 @@ class ClaudeMemoryClient:
         self.max_tokens = max_tokens
         self.context_management = context_management or DEFAULT_CONTEXT_MANAGEMENT
         self.system_prompt = memory_system_prompt or MEMORY_SYSTEM_PROMPT
+        self.auto_save_memory = auto_save_memory
+        self.auto_handle_tool_calls = auto_handle_tool_calls
         self.history: List[BetaMessageParam] = []
-
-        logger.info(f"Claude Memory 客户端初始化完成，模型: {model}")
-        if base_url:
-            logger.info(f"使用自定义 API 基础 URL: {base_url}")
+        self.memory_tool = MemoryBackendTool(
+            self.memory_backend,
+            auto_save_callback=self._memory_tool_auto_save,
+            tool_overrides=tool_overrides,
+        )
+        self._last_usage: Optional[Dict[str, Any]] = None
 
     def chat(self, user_input: str) -> str:
         """发送消息并获得回复
@@ -120,27 +211,28 @@ class ClaudeMemoryClient:
             MemoryAPIError: API 调用失败
             MemoryBackendError: 记忆后端操作失败
         """
-        # 添加用户输入到历史记录
         self.history.append({"role": "user", "content": user_input})
-        logger.debug(f"添加用户消息: {user_input[:50]}...")
+
+        tool_result_entries = 0
 
         try:
-            response = self._create_message()
-            assistant_response = self._process_response(response)
+            assistant_response, text_reply, tool_result_entries = self._run_tool_runner()
 
-            # 添加助手回复到历史记录
-            self.history.append({"role": "assistant", "content": assistant_response})
+            if assistant_response:
+                self.history.append({"role": "assistant", "content": assistant_response})
+            else:
+                self.history.append({"role": "assistant", "content": text_reply})
 
-            # 提取并返回纯文本回复
-            return self._extract_text_from_response(assistant_response)
+            return text_reply
 
         except Exception as e:
-            logger.error(f"聊天过程中发生错误: {e}")
-            # 从历史记录中移除失败的用户输入
             self.history.pop()
+            for _ in range(tool_result_entries):
+                if self.history:
+                    self.history.pop()
             raise MemoryAPIError(f"聊天失败: {e}") from e
 
-    
+
     def add_memory(self, path: str, content: str) -> None:
         """添加记忆
 
@@ -153,9 +245,9 @@ class ClaudeMemoryClient:
         """
         try:
             self.memory_backend.create(path, content)
-            logger.info(f"添加记忆: {path}")
+            if self.auto_save_memory:
+                self._auto_save_memory(path, "create", file_text=content)
         except Exception as e:
-            logger.error(f"添加记忆失败: {e}")
             raise MemoryBackendError(f"添加记忆失败: {e}") from e
 
     def get_memory(self, path: str, view_range: Optional[tuple] = None) -> str:
@@ -172,11 +264,8 @@ class ClaudeMemoryClient:
             MemoryBackendError: 记忆操作失败
         """
         try:
-            result = self.memory_backend.view(path, view_range)
-            logger.debug(f"获取记忆: {path}")
-            return result
+            return self.memory_backend.view(path, view_range)
         except Exception as e:
-            logger.error(f"获取记忆失败: {e}")
             raise MemoryBackendError(f"获取记忆失败: {e}") from e
 
     def delete_memory(self, path: str) -> None:
@@ -190,9 +279,9 @@ class ClaudeMemoryClient:
         """
         try:
             self.memory_backend.delete(path)
-            logger.info(f"删除记忆: {path}")
+            if self.auto_save_memory:
+                self._auto_save_memory(path, "delete")
         except Exception as e:
-            logger.error(f"删除记忆失败: {e}")
             raise MemoryBackendError(f"删除记忆失败: {e}") from e
 
     def clear_all_memories(self) -> None:
@@ -203,15 +292,12 @@ class ClaudeMemoryClient:
         """
         try:
             self.memory_backend.clear_all_memory()
-            logger.info("已清除所有记忆")
         except Exception as e:
-            logger.error(f"清除所有记忆失败: {e}")
             raise MemoryBackendError(f"清除所有记忆失败: {e}") from e
 
     def clear_conversation_history(self) -> None:
         """清除对话历史记录"""
         self.history.clear()
-        logger.info("已清除对话历史记录")
 
     def get_conversation_history(self) -> List[BetaMessageParam]:
         """获取对话历史记录
@@ -228,7 +314,6 @@ class ClaudeMemoryClient:
             prompt: 新的系统提示
         """
         self.system_prompt = prompt
-        logger.info("系统提示已更新")
 
     def set_context_management(self, config: Dict[str, Any]) -> None:
         """设置上下文管理配置
@@ -237,7 +322,6 @@ class ClaudeMemoryClient:
             config: 新的上下文管理配置
         """
         self.context_management = config
-        logger.info("上下文管理配置已更新")
 
     def get_token_usage_info(self) -> Optional[Dict[str, Any]]:
         """获取最近一次API调用的令牌使用信息
@@ -245,10 +329,9 @@ class ClaudeMemoryClient:
         Returns:
             令牌使用信息字典，如果没有可用信息则返回 None
         """
-        # 这里需要从最近的响应中提取使用信息
-        # 实际实现需要存储最近的响应对象
-        logger.debug("令牌使用信息功能待实现")
-        return None
+        if self._last_usage is None:
+            return None
+        return dict(self._last_usage)
 
     def memory_exists(self, path: str) -> bool:
         """检查记忆是否存在
@@ -262,7 +345,6 @@ class ClaudeMemoryClient:
         try:
             return self.memory_backend.memory_exists(path)
         except Exception as e:
-            logger.error(f"检查记忆存在性失败: {e}")
             raise MemoryBackendError(f"检查记忆存在性失败: {e}") from e
 
     def list_memories(self, path: str = "/memories") -> List[str]:
@@ -277,7 +359,6 @@ class ClaudeMemoryClient:
         try:
             return self.memory_backend.list_memories(path)
         except Exception as e:
-            logger.error(f"列出记忆失败: {e}")
             raise MemoryBackendError(f"列出记忆失败: {e}") from e
 
     def get_memory_stats(self) -> Dict[str, Any]:
@@ -289,7 +370,6 @@ class ClaudeMemoryClient:
         try:
             return self.memory_backend.get_memory_stats()
         except Exception as e:
-            logger.error(f"获取记忆统计信息失败: {e}")
             raise MemoryBackendError(f"获取记忆统计信息失败: {e}") from e
 
     def backup_memory(self, backup_path: str) -> None:
@@ -300,9 +380,7 @@ class ClaudeMemoryClient:
         """
         try:
             self.memory_backend.backup_memory(backup_path)
-            logger.info(f"记忆数据已备份到: {backup_path}")
         except Exception as e:
-            logger.error(f"备份记忆数据失败: {e}")
             raise MemoryBackendError(f"备份记忆数据失败: {e}") from e
 
     def restore_memory(self, backup_path: str) -> None:
@@ -313,290 +391,85 @@ class ClaudeMemoryClient:
         """
         try:
             self.memory_backend.restore_memory(backup_path)
-            logger.info(f"记忆数据已从备份恢复: {backup_path}")
         except Exception as e:
-            logger.error(f"恢复记忆数据失败: {e}")
             raise MemoryBackendError(f"恢复记忆数据失败: {e}") from e
 
-    def _create_message(self) -> BetaMessage:
-        """创建 API 消息请求"""
-        try:
-            # 完整的 memory tool 定义，包含 input_schema
-            memory_tool = {
-                "type": "memory_20250818",
-                "name": "memory",
-                "input_schema": {
-                    "type": "object",
-                    "properties": {
-                        "command": {
-                            "type": "string",
-                            "enum": ["view", "create", "str_replace", "insert", "delete", "rename"],
-                            "description": "要执行的命令类型"
-                        },
-                        "path": {
-                            "type": "string",
-                            "description": "文件或目录路径，必须以 /memories 开头"
-                        },
-                        "view_range": {
-                            "type": "array",
-                            "items": {"type": "integer"},
-                            "minItems": 2,
-                            "maxItems": 2,
-                            "description": "可选的行范围 [start_line, end_line]，仅用于 view 命令"
-                        },
-                        "file_text": {
-                            "type": "string",
-                            "description": "文件内容，用于 create 命令"
-                        },
-                        "old_str": {
-                            "type": "string",
-                            "description": "要替换的旧文本，用于 str_replace 命令"
-                        },
-                        "new_str": {
-                            "type": "string",
-                            "description": "新文本，用于 str_replace 命令"
-                        },
-                        "insert_line": {
-                            "type": "integer",
-                            "minimum": 0,
-                            "description": "插入行号，用于 insert 命令"
-                        },
-                        "insert_text": {
-                            "type": "string",
-                            "description": "要插入的文本，用于 insert 命令"
-                        },
-                        "old_path": {
-                            "type": "string",
-                            "description": "原路径，用于 rename 命令"
-                        },
-                        "new_path": {
-                            "type": "string",
-                            "description": "新路径，用于 rename 命令"
-                        }
-                    },
-                    "required": ["command", "path"],
-                    "allOf": [
-                        {
-                            "if": {"properties": {"command": {"const": "view"}}},
-                            "then": {"required": ["command", "path"]},
-                            "else": True
-                        },
-                        {
-                            "if": {"properties": {"command": {"const": "create"}}},
-                            "then": {"required": ["command", "path", "file_text"]},
-                            "else": True
-                        },
-                        {
-                            "if": {"properties": {"command": {"const": "str_replace"}}},
-                            "then": {"required": ["command", "path", "old_str", "new_str"]},
-                            "else": True
-                        },
-                        {
-                            "if": {"properties": {"command": {"const": "insert"}}},
-                            "then": {"required": ["command", "path", "insert_line", "insert_text"]},
-                            "else": True
-                        },
-                        {
-                            "if": {"properties": {"command": {"const": "delete"}}},
-                            "then": {"required": ["command", "path"]},
-                            "else": True
-                        },
-                        {
-                            "if": {"properties": {"command": {"const": "rename"}}},
-                            "then": {"required": ["command", "old_path", "new_path"]},
-                            "else": True
-                        }
-                    ]
-                }
-            }
-
-            response = self.client.beta.messages.create(
-                model=self.model,
-                max_tokens=self.max_tokens,
-                messages=self.history,
-                tools=[memory_tool],
-                betas=["context-management-2025-06-27"],
-                system=self.system_prompt,
-                context_management=cast(BetaContextManagementConfigParam, self.context_management),
-            )
-            return response
-        except Exception as e:
-            logger.error(f"API 调用失败: {e}")
-            raise MemoryAPIError(f"API 调用失败: {e}") from e
-
-    def _process_response(self, response: BetaMessage) -> List[Dict[str, Any]]:
-        """处理 API 响应，处理工具调用
-
-        Args:
-            response: API 响应
-
-        Returns:
-            处理后的助手消息内容
-        """
+    def _run_tool_runner(self) -> Tuple[List[Dict[str, Any]], str, int]:
         assistant_content: List[Dict[str, Any]] = []
-        tool_results_needed = False
+        text_parts: List[str] = []
+        tool_result_entries = 0
 
-        # 检查上下文管理操作
-        if hasattr(response, 'context_management') and response.context_management:
-            for edit in response.context_management.applied_edits:
-                logger.info(f"上下文管理操作: {edit.type}")
+        runner = self.client.beta.messages.tool_runner(
+            betas=["context-management-2025-06-27"],
+            model=self.model,
+            max_tokens=self.max_tokens,
+            system=self.system_prompt,
+            messages=self.history,
+            tools=[self.memory_tool],
+            context_management=cast(BetaContextManagementConfigParam, self.context_management),
+        )
 
-        # 处理响应内容块
-        for content_block in response.content:
-            if content_block.type == "text":
-                assistant_content.append({
-                    "type": "text",
-                    "text": content_block.text
-                })
+        for message in runner:
+            if hasattr(message, "usage") and message.usage:
+                usage = message.usage
+                if hasattr(usage, "model_dump"):
+                    self._last_usage = usage.model_dump()
+                else:  # pragma: no cover - 兼容旧版本 SDK
+                    self._last_usage = dict(usage)  # type: ignore[arg-type]
 
-            elif content_block.type == "tool_use" and content_block.name == "memory":
-                # 处理记忆工具调用
-                tool_input = content_block.input
-                logger.debug(f"记忆工具调用: {tool_input.get('command')}")
+            for content in message.content:
+                if content.type == "text":
+                    text_parts.append(content.text)
+                    assistant_content.append({"type": "text", "text": content.text})
+                elif content.type == "tool_use":
+                    assistant_content.append(
+                        {
+                            "type": "tool_use",
+                            "id": content.id,
+                            "name": content.name,
+                            "input": content.input,
+                        }
+                    )
 
-                assistant_content.append({
-                    "type": "tool_use",
-                    "id": content_block.id,
-                    "name": content_block.name,
-                    "input": tool_input,
-                })
+            tool_response = runner.generate_tool_call_response()
+            if tool_response and tool_response.get("content"):
+                self.history.append({"role": "user", "content": tool_response["content"]})
+                tool_result_entries += 1
 
-                tool_results_needed = True
+        return assistant_content, "".join(text_parts), tool_result_entries
 
-        # 如果需要工具结果，继续处理
-        if tool_results_needed:
-            return self._handle_tool_calls(assistant_content)
-
-        return assistant_content
-
-    def _handle_tool_calls(self, assistant_content: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """处理工具调用并获取结果
-
-        Args:
-            assistant_content: 助手内容，包含工具调用
-
-        Returns:
-            完整的助手响应内容
-        """
-        tool_results = []
-
-        for content_block in assistant_content:
-            if content_block.get("type") == "tool_use" and content_block.get("name") == "memory":
-                tool_id = content_block["id"]
-                tool_input = content_block["input"]
-
-                try:
-                    result = self._handle_memory_tool(tool_input)
-                    tool_results.append({
-                        "type": "tool_result",
-                        "tool_use_id": tool_id,
-                        "content": result
-                    })
-                except Exception as e:
-                    logger.error(f"工具调用失败: {e}")
-                    tool_results.append({
-                        "type": "tool_result",
-                        "tool_use_id": tool_id,
-                        "content": f"错误: {e}",
-                        "is_error": True
-                    })
-
-        # 如果有工具结果，添加到历史记录并继续对话
-        if tool_results:
-            self.history.append({"role": "user", "content": tool_results})
-
-            # 继续获取最终响应
-            try:
-                response = self._create_message()
-                final_content = self._process_response(response)
-                assistant_content.extend(final_content)
-            except Exception as e:
-                logger.error(f"获取最终响应失败: {e}")
-                raise MemoryAPIError(f"获取最终响应失败: {e}") from e
-
-        return assistant_content
-
-    def _handle_memory_tool(self, tool_input: Dict[str, Any]) -> str:
-        """处理记忆工具调用
+    def _auto_save_memory(self, path: str, operation: str, **kwargs) -> None:
+        """自动保存记忆到持久化存储
 
         Args:
-            tool_input: 工具输入参数
-
-        Returns:
-            工具执行结果
+            path: 记忆文件路径
+            operation: 操作类型 (create, str_replace, insert, delete, rename)
+            **kwargs: 操作相关的额外参数
         """
-        command = tool_input.get("command")
+        if not self.auto_save_memory:
+            return
 
-        try:
-            if command == "view":
-                path = tool_input["path"]
-                view_range = tool_input.get("view_range")
-                return self.memory_backend.view(path, view_range)
+        # 对于文件系统后端，记忆操作已直接写入文件系统
+        # 此方法可以用于：
+        # 1. 记录操作日志
+        # 2. 触发备份操作
+        # 3. 同步到其他存储后端
+        # 4. 验证操作结果
 
-            elif command == "create":
-                path = tool_input["path"]
-                file_text = tool_input["file_text"]
-                self.memory_backend.create(path, file_text)
-                return f"文件 {path} 创建成功"
+        # 验证操作是否成功
+        if operation in ["create", "str_replace", "insert"] and hasattr(self.memory_backend, 'memory_exists'):
+            if not self.memory_backend.memory_exists(path):
+                raise MemoryBackendError(f"自动保存验证失败: 文件 {path} 未找到")
 
-            elif command == "str_replace":
-                path = tool_input["path"]
-                old_str = tool_input["old_str"]
-                new_str = tool_input["new_str"]
-                self.memory_backend.str_replace(path, old_str, new_str)
-                return f"文件 {path} 已更新"
-
-            elif command == "insert":
-                path = tool_input["path"]
-                insert_line = tool_input["insert_line"]
-                insert_text = tool_input["insert_text"]
-                self.memory_backend.insert(path, insert_line, insert_text)
-                return f"已在文件 {path} 的第 {insert_line} 行插入内容"
-
-            elif command == "delete":
-                path = tool_input["path"]
-                self.memory_backend.delete(path)
-                return f"已删除 {path}"
-
-            elif command == "rename":
-                old_path = tool_input["old_path"]
-                new_path = tool_input["new_path"]
-                self.memory_backend.rename(old_path, new_path)
-                return f"已将 {old_path} 重命名为 {new_path}"
-
-            else:
-                return f"不支持的命令: {command}"
-
-        except Exception as e:
-            logger.error(f"记忆工具操作失败: {e}")
-            return f"操作失败: {e}"
-
-    @staticmethod
-    def _extract_text_from_response(assistant_content: List[Dict[str, Any]]) -> str:
-        """从助手响应中提取纯文本
-
-        Args:
-            assistant_content: 助手响应内容
-
-        Returns:
-            纯文本回复
-        """
-        text_parts = []
-        for content_block in assistant_content:
-            if content_block.get("type") == "text":
-                text_parts.append(content_block["text"])
-        return "".join(text_parts)
+    def _memory_tool_auto_save(self, path: str, operation: str, extra: Dict[str, Any]) -> None:
+        if not self.auto_save_memory:
+            return
+        self._auto_save_memory(path, operation, **extra)
 
     def interactive_loop(self):
         """启动交互式对话循环"""
         print("Claude Memory SDK - 交互式对话")
-        print("命令:")
-        print("  /quit 或 /exit - 退出会话")
-        print("  /clear - 开始新的对话")
-        print("  /memory_view - 查看所有记忆文件")
-        print("  /memory_clear - 删除所有记忆")
-        print("  /history - 查看对话历史")
-        print("  /help - 显示帮助信息")
+        print("命令: /quit, /clear, /memory_view, /memory_clear, /history, /autosave, /help")
 
         while True:
             try:
@@ -615,21 +488,21 @@ class ClaudeMemoryClient:
             elif user_input.lower() == "/memory_view":
                 try:
                     result = self.get_memory("/memories")
-                    print("\n[记忆内容]:")
+                    print("\n记忆内容:")
                     print(result)
                 except Exception as e:
-                    print(f"[ERROR] 获取记忆失败: {e}")
+                    print(f"获取记忆失败: {e}")
                 continue
             elif user_input.lower() == "/memory_clear":
                 try:
                     self.clear_all_memories()
-                    print("[OK] 所有记忆已清除")
+                    print("所有记忆已清除")
                 except Exception as e:
-                    print(f"[ERROR] 清除记忆失败: {e}")
+                    print(f"清除记忆失败: {e}")
                 continue
             elif user_input.lower() == "/history":
                 history = self.get_conversation_history()
-                print(f"\n[对话历史] (共 {len(history)} 条):")
+                print(f"\n对话历史 (共 {len(history)} 条):")
                 for i, msg in enumerate(history):
                     role = msg["role"].upper()
                     content = msg["content"]
@@ -638,11 +511,15 @@ class ClaudeMemoryClient:
                     else:
                         print(f"[{i+1}] {role}: [复杂内容]")
                 continue
+            elif user_input.lower() == "/autosave":
+                self.auto_save_memory = not self.auto_save_memory
+                print(f"自动保存: {'已启用' if self.auto_save_memory else '已禁用'}")
+                continue
             elif user_input.lower() == "/help":
-                print("\n[帮助信息]:")
+                print("\n帮助:")
                 print("- 直接输入消息与Claude对话")
-                print("- Claude会自动管理记忆，存储重要信息")
-                print("- 使用 /memory_view 查看Claude记住的内容")
+                print("- Claude会自动管理记忆")
+                print(f"- 自动保存: {'已启用' if self.auto_save_memory else '已禁用'}")
                 continue
             elif not user_input:
                 continue
@@ -652,4 +529,4 @@ class ClaudeMemoryClient:
                 response = self.chat(user_input)
                 print(response)
             except Exception as e:
-                print(f"\n[ERROR] 对话失败: {e}")
+                print(f"\n对话失败: {e}")

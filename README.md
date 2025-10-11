@@ -170,81 +170,101 @@ client = ClaudeMemoryClient(memory_backend=custom_backend)
 
 ### ClaudeMemoryClient
 
-主要的客户端类，提供对话和记忆管理功能。
+SDK 的入口类，封装与 Claude API 和记忆工具的交互流程。
 
 #### 初始化参数
 
-- `api_key` (str, optional): Anthropic API 密钥，如果为 None 则从环境变量 `ANTHROPIC_API_KEY` 获取
-- `base_url` (str, optional): API 基础 URL，如果为 None 则从环境变量 `ANTHROPIC_BASE_URL` 获取
-- `memory_backend` (BaseMemoryBackend, optional): 自定义记忆后端
-- `model` (str, optional): 使用的模型，如果为 None 则从环境变量 `ANTHROPIC_MODEL` 获取，默认为 "claude-4-sonnet"
-- `max_tokens` (int): 最大生成令牌数，默认为 2048
-- `system_prompt` (str, optional): 自定义系统提示
-- `context_management` (dict, optional): 上下文管理配置
+| 参数 | 说明 |
+| ---- | ---- |
+| `api_key` | Anthropic API 密钥，默认读取 `ANTHROPIC_API_KEY` |
+| `base_url` | API 基础 URL，默认读取 `ANTHROPIC_BASE_URL` |
+| `memory_backend` | 自定义 `BaseMemoryBackend` 实例，默认文件系统后端 |
+| `model` | 使用的模型名称，默认 `claude-4-sonnet` 或读取 `ANTHROPIC_MODEL` |
+| `max_tokens` | 单次回复的最大 tokens 数，默认为 2048 |
+| `context_management` | 上下文清理策略，默认为内置配置（保留记忆工具调用） |
+| `memory_system_prompt` | 自定义记忆系统提示词 |
+| `auto_save_memory` | 是否在工具调用后执行自动校验/持久化（默认开启） |
+| `use_full_schema` | 是否为工具声明完整的 `input_schema`（自动根据端点判断） |
+| `auto_handle_tool_calls` | 是否在收到 `tool_use` 时递归拉取更多消息（默认关闭） |
 
-#### 主要方法
+#### 对话与上下文
 
-##### `chat(user_input: str) -> str`
+- `chat(user_input: str) -> str`
+  - 发送用户输入，内部通过 `tool_runner` 调度记忆工具，并将 Claude 回复追加到历史中。
+- `get_conversation_history() -> List[BetaMessageParam]`
+  - 返回当前完整消息历史，可用于调试工具事件。
+- `clear_conversation_history() -> None`
+  - 清空会话历史记录（不会影响已写入的记忆文件）。
+- `set_system_prompt(prompt: str) -> None`
+  - 替换默认的记忆系统提示词。
+- `set_context_management(config: Dict[str, Any]) -> None`
+  - 自定义上下文清理策略，覆盖默认配置。
+- `get_token_usage_info() -> Optional[Dict[str, Any]]`
+  - 返回最近一次 API 调用的 token 统计（若 SDK 提供）。
 
-发送消息并获得回复，自动处理记忆工具调用。
+#### 记忆管理
 
-```python
-response = client.chat("你好，今天天气怎么样？")
-```
+- `add_memory(path: str, content: str) -> None`
+  - 创建或覆盖记忆文件，路径必须位于 `/memories` 下。
+- `get_memory(path: str, view_range: Optional[tuple] = None) -> str`
+  - 读取文件或目录内容，可选 `view_range=(start, end)` 限定行号。
+- `delete_memory(path: str) -> None`
+  - 删除指定文件或目录（根目录 `/memories` 会被保护）。
+- `clear_all_memories() -> None`
+  - 调用当前后端的清空逻辑，重置整个记忆目录。
+- `memory_exists(path: str) -> bool`
+  - 检查路径是否存在。
+- `list_memories(path: str = "/memories") -> List[str]`
+  - 返回指定目录下的文件/目录列表。
+- `get_memory_stats() -> Dict[str, Any]`
+  - 汇总当前记忆目录的文件数、目录数、容量等信息。
+- `backup_memory(backup_path: str) -> None`
+  - 导出记忆数据为 zip 包。
+- `restore_memory(backup_path: str) -> None`
+  - 从备份 zip 中恢复记忆。
 
-##### `add_memory(path: str, content: str) -> None`
+#### 其他工具
 
-添加新的记忆文件。
+- `interactive_loop() -> None`
+  - 内置终端交互演示，支持常见命令。
 
-```python
-client.add_memory("/memories/notes.txt", "这是我的笔记内容")
-```
+> 提示：所有写操作都会触发 `auto_save_memory` 钩子，用于校验或扩展持久化策略。
 
-##### `get_memory(path: str, view_range: tuple=None) -> str`
+### MemoryBackendTool
 
-获取记忆文件内容。
-
-```python
-content = client.get_memory("/memories/notes.txt")
-partial = client.get_memory("/memories/notes.txt", (1, 10))  # 前10行
-```
-
-##### `delete_memory(path: str) -> None`
-
-删除记忆文件。
-
-```python
-client.delete_memory("/memories/notes.txt")
-```
-
-##### `clear_all_memories() -> None`
-
-清除所有记忆数据。
-
-```python
-client.clear_all_memories()
-```
-
-##### `clear_conversation_history() -> None`
-
-清除对话历史记录。
-
-```python
-client.clear_conversation_history()
-```
+`MemoryBackendTool` 继承自官方 `BetaAbstractMemoryTool`，将任何 `BaseMemoryBackend` 实例包装成可注入 `tool_runner` 的工具。默认 `ClaudeMemoryClient` 会实例化该工具并将其传入 API 请求。自定义后端只需实现基类接口即可自动支持记忆工具调用。
 
 ### BaseMemoryBackend
 
-记忆存储后端的抽象基类，所有自定义后端都需要继承此类。
+抽象基类，约束所有记忆存储后端需实现的最小接口：
 
-#### 抽象方法
+- `view(path, view_range=None)`：读取目录或文件（支持行号过滤）。
+- `create(path, file_text)`：写入新文件，若父目录不存在需自动创建。
+- `str_replace(path, old_str, new_str)`：在文件中进行唯一字符串替换。
+- `insert(path, insert_line, insert_text)`：在指定行插入文本。
+- `delete(path)`：删除文件或目录。
+- `rename(old_path, new_path)`：移动/重命名路径。
 
-- `view(path: str, view_range: tuple=None) -> str`: 查看路径内容
-- `create(path: str, file_text: str) -> None`: 创建新文件
-- `str_replace(path: str, old_str: str, new_str: str) -> None`: 字符串替换
-- `insert(path: str, insert_line: int, insert_text: str) -> None`: 行插入
-- `delete(path: str) -> None`: 删除路径
-- `rename(old_path: str, new_path: str) -> None`: 重命名路径
+可选扩展（如未实现将抛出 `NotImplementedError`）:
+
+- `clear_all_memory()`、`memory_exists()`、`list_memories()`、`get_memory_stats()`、`backup_memory()`、`restore_memory()`。
+
+### FileSystemMemoryBackend
+
+默认实现，使用本地文件系统存储记忆数据，特点：
+
+- 使用 `Path.resolve()` + `relative_to()` 防止目录遍历。
+- 忽略隐藏文件，支持递归统计目录。
+- `backup_memory` / `restore_memory` 使用 zip 归档便于迁移。
+- 所有路径以 `/memories` 为根，自动创建缺失目录。
+
+### 异常层级
+
+- `MemorySDKError`：SDK 顶层异常基类。
+- `MemoryBackendError` 及细分的 `MemoryPathError`、`MemoryFileOperationError`：后端相关错误。
+- `MemoryAPIError` 及其子类：`MemoryAuthenticationError`、`MemoryRateLimitError`、`MemoryTimeoutError` 等，便于区分 API 失败原因。
+
+开发时捕获这些异常，可以更精细地处理鉴权、限流、文件系统等错误情形。
 
 ## 🔧 配置选项
 

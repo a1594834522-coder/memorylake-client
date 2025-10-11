@@ -12,6 +12,7 @@ __email__ = "team@memorylake.ai"
 
 from .client import ClaudeMemoryClient
 from .memory_backend import BaseMemoryBackend, FileSystemMemoryBackend
+from .memory_tool import MemoryBackendTool
 from .exceptions import (
     MemorySDKError,
     MemoryBackendError,
@@ -23,6 +24,7 @@ __all__ = [
     "ClaudeMemoryClient",
     "BaseMemoryBackend",
     "FileSystemMemoryBackend",
+    "MemoryBackendTool",
     "MemorySDKError",
     "MemoryBackendError",
     "MemoryPathError",
