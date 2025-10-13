@@ -2,6 +2,15 @@
 
 本文档记录了 Memory Lake SDK 的所有重要更改。
 
+## [0.3.0] - 2025-01-14
+
+### 重大更新
+- 🔁 将核心命名从 `ClaudeMemoryClient` 重构为 `MemoryLakeClient`，与 PyPI 包 `memory-lake-sdk` 品牌保持一致
+- 📦 同步更新包名、入口脚本与清单配置，统一使用 `memory_lake_sdk` 命名空间
+- 📚 更新 README、示例与开发文档，覆盖新的导入路径与用法
+
+---
+
 ## [0.2.0] - 2025-01-13
 
 ### 新增

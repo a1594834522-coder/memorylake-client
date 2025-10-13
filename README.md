@@ -5,14 +5,14 @@
 ### 基础安装
 
 ```bash
-pip install --extra-index-url https://test.pypi.org/simple/ memory-lake-sdk==0.2.0
+pip install memory-lake-sdk==0.3.0
 ```
 
 ### 开发安装
 
 ```bash
 # 克隆仓库
-git clone https://github.com/memorylake/memory-lake-sdk.git
+git clone https://github.com/memorylake
 cd memory-lake-sdk
 
 # 安装开发依赖
@@ -387,4 +387,3 @@ mypy memory_lake_sdk/
 ## 📄 许可证
 
 本项目采用 MIT 许可证。详见 [LICENSE](LICENSE) 文件。
-

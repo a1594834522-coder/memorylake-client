@@ -6,7 +6,7 @@ Memory Lake SDK
 一个用于简化 Claude Memory Tool 使用的 Python SDK。
 """
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 __author__ = "Memory Lake Team"
 __email__ = "team@memorylake.ai"
 
