@@ -2,6 +2,23 @@
 
 本文档记录了 Claude Memory SDK 的所有重要更改。
 
+## [0.2.0] - 2025-01-13
+
+### 新增
+- 📄 新增 MIT `LICENSE`、`MANIFEST.in` 等发布所需文件
+- 🛠️ 提供 `claude_memory_sdk.examples.manage_memory` 与 `custom_backend` 示例脚本
+- 📦 `claude_memory_sdk.examples` 现作为正式子包发布，并附带示例文档
+- 🧰 README 新增 PyPI 发布流程说明
+- 🔁 PyPI 发布包更名为 `memory-lake-sdk`
+
+### 变更
+- ⬆️ 将 `anthropic` 最低版本提升至 `0.39.0` 以匹配最新 Memory Tool API
+- 🔧 调整打包配置以包含示例资源与许可证信息
+- 📝 更新 `setup.py`、`pyproject.toml`、`requirements.txt` 以支持 PyPI 上传
+- 🌐 示例与文档默认使用官方 `https://api.anthropic.com` 端点，并移除占位 API Key
+
+---
+
 ## [0.1.0] - 2025-10-11
 
 ### 新增

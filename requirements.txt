@@ -1,5 +1,5 @@
 # Claude Memory SDK 核心依赖
-anthropic>=0.20.0
+anthropic>=0.39.0
 
 # 开发依赖（可选）
 # 安装方法: pip install -e .[dev]

@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "claude-memory-sdk"
+name = "memory-lake-sdk"
 dynamic = ["version"]
 description = "简化开发者对 Claude Memory Tool 使用的 Python SDK"
 readme = "README.md"
@@ -42,7 +42,7 @@ classifiers = [
 ]
 requires-python = ">=3.8"
 dependencies = [
-    "anthropic>=0.20.0",
+    "anthropic>=0.39.0",
 ]
 
 [project.optional-dependencies]
@@ -74,6 +74,14 @@ Homepage = "https://github.com/memorylake/claude-memory-sdk"
 Documentation = "https://github.com/memorylake/claude-memory-sdk/docs"
 Repository = "https://github.com/memorylake/claude-memory-sdk"
 "Bug Tracker" = "https://github.com/memorylake/claude-memory-sdk/issues"
+"Changelog" = "https://github.com/memorylake/claude-memory-sdk/blob/main/CHANGELOG.md"
+
+[tool.setuptools]
+include-package-data = true
+license-files = ["LICENSE"]
+
+[tool.setuptools.package-data]
+claude_memory_sdk = ["examples/*.py", "examples/*.md"]
 
 [tool.setuptools.dynamic]
 version = {attr = "claude_memory_sdk.__version__"}

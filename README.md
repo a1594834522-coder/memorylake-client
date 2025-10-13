@@ -1,7 +1,7 @@
 # Claude Memory SDK
 
-[![PyPI version](https://badge.fury.io/py/claude-memory-sdk.svg)](https://badge.fury.io/py/claude-memory-sdk)
-[![Python versions](https://img.shields.io/pypi/pyversions/claude-memory-sdk.svg)](https://pypi.org/project/claude-memory-sdk/)
+[![PyPI version](https://badge.fury.io/py/memory-lake-sdk.svg)](https://badge.fury.io/py/memory-lake-sdk)
+[![Python versions](https://img.shields.io/pypi/pyversions/memory-lake-sdk.svg)](https://pypi.org/project/memory-lake-sdk/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Build Status](https://github.com/memorylake/claude-memory-sdk/workflows/CI/badge.svg)](https://github.com/memorylake/claude-memory-sdk/actions)
 
@@ -21,7 +21,7 @@
 ### 基础安装
 
 ```bash
-pip install claude-memory-sdk
+pip install memory-lake-sdk
 ```
 
 ### 开发安装
@@ -49,13 +49,13 @@ pip install -e .[test]
 
 ```bash
 # 必需：API 密钥
-export ANTHROPIC_API_KEY="DUMMY"
+export ANTHROPIC_API_KEY="sk-ant-********"
 
 # 可选：指定模型（默认为 claude-4-sonnet）
-export ANTHROPIC_MODEL="claude-sonnet-4-5-20250929"
+export ANTHROPIC_MODEL="claude-3-5-sonnet-20241022"
 
-# 可选：自定义 API 基础 URL（用于代理或私有部署）
-export ANTHROPIC_BASE_URL="http://107.155.48.191:8000/anthropic"
+# 可选：自定义 API 基础 URL（默认 https://api.anthropic.com）
+export ANTHROPIC_BASE_URL="https://api.anthropic.com"
 ```
 
 ### 基础对话
@@ -87,9 +87,8 @@ from claude_memory_sdk import ClaudeMemoryClient
 # 通过参数直接配置
 client = ClaudeMemoryClient(
     api_key="your-api-key",
-    base_url="http://107.155.48.191:8000/anthropic",  # 自定义 API 端点
-    model="claude-3-opus-20240229",            # 指定模型
-    max_tokens=4096                             # 自定义令牌限制
+    model="claude-3-5-sonnet-20241022",  # 指定模型
+    max_tokens=4096                     # 自定义令牌限制
 )
 
 response = client.chat("你好")
@@ -332,6 +331,26 @@ claude_memory_sdk/
 ├── requirements.txt        # 依赖列表
 └── README.md               # 项目文档
 ```
+
+## 🚢 发布指南
+
+1. 更新版本号：修改 `claude_memory_sdk/__version__` 并在 `CHANGELOG.md` 中记录变更。
+2. 清理旧的构建产物：
+   ```bash
+   rm -rf build dist *.egg-info
+   ```
+3. 构建发布包：
+   ```bash
+   python -m build
+   ```
+4. 本地校验生成的包：
+   ```bash
+   twine check dist/*
+   ```
+5. 发布到 PyPI：
+   ```bash
+   twine upload dist/*
+   ```
 
 ## 🤝 贡献指南
 

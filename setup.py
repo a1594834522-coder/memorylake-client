@@ -24,7 +24,7 @@ def get_version():
     return "0.1.0"
 
 setup(
-    name="claude-memory-sdk",
+    name="memory-lake-sdk",
     version=get_version(),
     author="Memory Lake Team",
     author_email="team@memorylake.ai",
@@ -36,6 +36,7 @@ setup(
         "Bug Tracker": "https://github.com/memorylake/claude-memory-sdk/issues",
         "Documentation": "https://github.com/memorylake/claude-memory-sdk/docs",
         "Source Code": "https://github.com/memorylake/claude-memory-sdk",
+        "Changelog": "https://github.com/memorylake/claude-memory-sdk/blob/main/CHANGELOG.md",
     },
     packages=find_packages(),
     classifiers=[
@@ -55,7 +56,7 @@ setup(
     ],
     python_requires=">=3.8",
     install_requires=[
-        "anthropic>=0.20.0",
+        "anthropic>=0.39.0",
     ],
     extras_require={
         "dev": [
@@ -87,7 +88,7 @@ setup(
     package_data={
         "claude_memory_sdk": [
             "examples/*.py",
-            "tests/*.py",
+            "examples/*.md",
         ],
     },
     keywords=[
@@ -102,5 +103,6 @@ setup(
         "python",
     ],
     license="MIT",
+    license_files=["LICENSE"],
     zip_safe=False,
 )

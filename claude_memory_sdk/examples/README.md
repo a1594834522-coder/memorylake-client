@@ -67,18 +67,18 @@ python claude_memory_sdk/examples/custom_backend.py
 ```bash
 # Windows (PowerShell)
 $env:ANTHROPIC_API_KEY = "your-api-key-here"
-$env:ANTHROPIC_BASE_URL = "https://open.bigmodel.cn/api/anthropic"
-$env:ANTHROPIC_MODEL = "GLM-4.6"
+$env:ANTHROPIC_BASE_URL = "https://api.anthropic.com"  # 可选，默认即为此值
+$env:ANTHROPIC_MODEL = "claude-3-5-sonnet-20241022"
 
 # Windows (CMD)
 set ANTHROPIC_API_KEY=your-api-key-here
-set ANTHROPIC_BASE_URL=https://open.bigmodel.cn/api/anthropic
-set ANTHROPIC_MODEL=GLM-4.6
+set ANTHROPIC_BASE_URL=https://api.anthropic.com
+set ANTHROPIC_MODEL=claude-3-5-sonnet-20241022
 
 # Linux/Mac
 export ANTHROPIC_API_KEY="your-api-key-here"
-export ANTHROPIC_BASE_URL="https://open.bigmodel.cn/api/anthropic"
-export ANTHROPIC_MODEL="GLM-4.6"
+export ANTHROPIC_BASE_URL="https://api.anthropic.com"
+export ANTHROPIC_MODEL="claude-3-5-sonnet-20241022"
 ```
 
 ### 2. 依赖安装
@@ -121,7 +121,7 @@ pip install anthropic
 ## 常见问题
 
 ### Q: 为什么有些示例中的对话功能不使用记忆工具？
-A: 因为当前的API端点（https://open.bigmodel.cn/api/anthropic）不支持memory工具，所以示例中使用基础对话功能来演示API连接。
+A: 请确保使用官方端点 `https://api.anthropic.com` 并启用最新模型版本。旧的或第三方兼容端点可能不支持 Memory Tool，因此示例会退化为基础对话功能。
 
 ### Q: 如何创建自己的记忆后端？
 A: 参考 `custom_backend.py` 示例，继承 `BaseMemoryBackend` 类并实现所有抽象方法。

@@ -12,8 +12,8 @@ NVM_VERSION="v0.40.3"
 CLAUDE_PACKAGE="@anthropic-ai/claude-code"
 CONFIG_DIR="$HOME/.claude"
 CONFIG_FILE="$CONFIG_DIR/settings.json"
-API_BASE_URL="https://open.bigmodel.cn/api/anthropic"
-API_KEY_URL="https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys"
+API_BASE_URL="https://api.anthropic.com"
+API_KEY_URL="https://console.anthropic.com/settings/keys"
 API_TIMEOUT_MS=3000000
 
 # ========================
