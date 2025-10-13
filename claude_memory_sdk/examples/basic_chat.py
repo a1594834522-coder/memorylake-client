@@ -13,6 +13,10 @@ import anthropic
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
+os.environ["ANTHROPIC_API_KEY"] = "DUMMY"
+os.environ["ANTHROPIC_MODEL"] = "claude-sonnet-4-5-20250929"
+os.environ["ANTHROPIC_BASE_URL"] = "http://107.155.48.191:8000/anthropic"
+
 from claude_memory_sdk import ClaudeMemoryClient
 
 

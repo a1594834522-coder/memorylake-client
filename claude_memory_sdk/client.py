@@ -7,6 +7,7 @@ Claude Memory SDK 主客户端
 """
 
 import os
+import warnings
 from typing import List, Dict, Any, Optional, Tuple, cast
 from anthropic import Anthropic
 from anthropic.types.beta import (
@@ -71,7 +72,7 @@ class ClaudeMemoryClient:
             context_management: 上下文管理配置，如果为 None 则使用默认配置
             memory_system_prompt: 记忆系统提示词，如果为 None 则使用默认提示词
             auto_save_memory: 是否自动保存记忆到持久化存储，默认为 True
-            use_full_schema: 是否使用完整的 input_schema，None 表示自动检测
+            use_full_schema: (已弃用) 为兼容旧版本保留，不再对工具 schema 生效
             auto_handle_tool_calls: 是否自动处理工具调用并继续对话，默认为 False
         """
         # 从环境变量获取配置
@@ -82,105 +83,18 @@ class ClaudeMemoryClient:
         if not api_key:
             raise ValueError("API 密钥未提供，请设置 api_key 参数或 ANTHROPIC_API_KEY 环境变量")
 
-        # 自动检测是否需要完整的 input_schema
-        if use_full_schema is None:
-            # 智能检测：如果使用非官方端点，则使用完整 schema
-            self.use_full_schema = bool(base_url and not base_url.startswith("https://api.anthropic.com"))
-        else:
-            self.use_full_schema = use_full_schema
+        # use_full_schema 参数在最新接口中已不再需要，保留以兼容旧调用
+        if use_full_schema:
+            warnings.warn(
+                "use_full_schema 参数已弃用，SDK 将使用内置的 memory_20250818 schema。",
+                RuntimeWarning,
+            )
+        self.use_full_schema = False
 
         # 初始化 Anthropic 客户端
         client_kwargs = {"api_key": api_key}
         if base_url:
             client_kwargs["base_url"] = base_url
-
-        tool_overrides: Optional[Dict[str, Any]] = None
-        if self.use_full_schema:
-            tool_overrides = {
-                "input_schema": {
-                    "type": "object",
-                    "properties": {
-                        "command": {
-                            "type": "string",
-                            "enum": ["view", "create", "str_replace", "insert", "delete", "rename"],
-                            "description": "要执行的命令类型",
-                        },
-                        "path": {
-                            "type": "string",
-                            "description": "文件或目录路径，必须以 /memories 开头",
-                        },
-                        "view_range": {
-                            "type": "array",
-                            "items": {"type": "integer"},
-                            "minItems": 2,
-                            "maxItems": 2,
-                            "description": "可选的行范围 [start_line, end_line]，仅用于 view 命令",
-                        },
-                        "file_text": {
-                            "type": "string",
-                            "description": "文件内容，用于 create 命令",
-                        },
-                        "old_str": {
-                            "type": "string",
-                            "description": "要替换的旧文本，用于 str_replace 命令",
-                        },
-                        "new_str": {
-                            "type": "string",
-                            "description": "新文本，用于 str_replace 命令",
-                        },
-                        "insert_line": {
-                            "type": "integer",
-                            "minimum": 0,
-                            "description": "插入行号，用于 insert 命令",
-                        },
-                        "insert_text": {
-                            "type": "string",
-                            "description": "要插入的文本，用于 insert 命令",
-                        },
-                        "old_path": {
-                            "type": "string",
-                            "description": "原路径，用于 rename 命令",
-                        },
-                        "new_path": {
-                            "type": "string",
-                            "description": "新路径，用于 rename 命令",
-                        },
-                    },
-                    "required": ["command", "path"],
-                    "allOf": [
-                        {
-                            "if": {"properties": {"command": {"const": "view"}}},
-                            "then": {"required": ["command", "path"]},
-                            "else": True,
-                        },
-                        {
-                            "if": {"properties": {"command": {"const": "create"}}},
-                            "then": {"required": ["command", "path", "file_text"]},
-                            "else": True,
-                        },
-                        {
-                            "if": {"properties": {"command": {"const": "str_replace"}}},
-                            "then": {"required": ["command", "path", "old_str", "new_str"]},
-                            "else": True,
-                        },
-                        {
-                            "if": {"properties": {"command": {"const": "insert"}}},
-                            "then": {"required": ["command", "path", "insert_line", "insert_text"]},
-                            "else": True,
-                        },
-                        {
-                            "if": {"properties": {"command": {"const": "delete"}}},
-                            "then": {"required": ["command", "path"]},
-                            "else": True,
-                        },
-                        {
-                            "if": {"properties": {"command": {"const": "rename"}}},
-                            "then": {"required": ["command", "old_path", "new_path"]},
-                            "else": True,
-                        },
-                    ],
-                }
-            }
 
         self.client = Anthropic(**client_kwargs)
         self.memory_backend = memory_backend or FileSystemMemoryBackend()
@@ -194,7 +108,6 @@ class ClaudeMemoryClient:
         self.memory_tool = MemoryBackendTool(
             self.memory_backend,
             auto_save_callback=self._memory_tool_auto_save,
-            tool_overrides=tool_overrides,
         )
         self._last_usage: Optional[Dict[str, Any]] = None
 
@@ -213,23 +126,28 @@ class ClaudeMemoryClient:
         """
         self.history.append({"role": "user", "content": user_input})
 
-        tool_result_entries = 0
+        appended_events = 0
 
         try:
-            assistant_response, text_reply, tool_result_entries = self._run_tool_runner()
+            events, text_reply = self._run_tool_runner()
 
-            if assistant_response:
-                self.history.append({"role": "assistant", "content": assistant_response})
-            else:
-                self.history.append({"role": "assistant", "content": text_reply})
+            for event_type, payload in events:
+                if event_type == "assistant":
+                    self.history.append({"role": "assistant", "content": payload})
+                elif event_type == "tool_result":
+                    self.history.append({"role": "user", "content": payload})
+                else:  # pragma: no cover - 防御性检查
+                    continue
+                appended_events += 1
 
             return text_reply
 
         except Exception as e:
-            self.history.pop()
-            for _ in range(tool_result_entries):
-                if self.history:
-                    self.history.pop()
+            while appended_events > 0 and self.history:
+                self.history.pop()
+                appended_events -= 1
+            if self.history:
+                self.history.pop()
             raise MemoryAPIError(f"聊天失败: {e}") from e
 
 
@@ -394,10 +312,9 @@ class ClaudeMemoryClient:
         except Exception as e:
             raise MemoryBackendError(f"恢复记忆数据失败: {e}") from e
 
-    def _run_tool_runner(self) -> Tuple[List[Dict[str, Any]], str, int]:
-        assistant_content: List[Dict[str, Any]] = []
+    def _run_tool_runner(self) -> Tuple[List[Tuple[str, Any]], str]:
+        events: List[Tuple[str, Any]] = []
         text_parts: List[str] = []
-        tool_result_entries = 0
 
         runner = self.client.beta.messages.tool_runner(
             betas=["context-management-2025-06-27"],
@@ -410,6 +327,7 @@ class ClaudeMemoryClient:
         )
 
         for message in runner:
+            assistant_blocks: List[Dict[str, Any]] = []
             if hasattr(message, "usage") and message.usage:
                 usage = message.usage
                 if hasattr(usage, "model_dump"):
@@ -420,9 +338,9 @@ class ClaudeMemoryClient:
             for content in message.content:
                 if content.type == "text":
                     text_parts.append(content.text)
-                    assistant_content.append({"type": "text", "text": content.text})
+                    assistant_blocks.append({"type": "text", "text": content.text})
                 elif content.type == "tool_use":
-                    assistant_content.append(
+                    assistant_blocks.append(
                         {
                             "type": "tool_use",
                             "id": content.id,
@@ -431,12 +349,14 @@ class ClaudeMemoryClient:
                         }
                     )
 
+            if assistant_blocks:
+                events.append(("assistant", assistant_blocks))
+
             tool_response = runner.generate_tool_call_response()
             if tool_response and tool_response.get("content"):
-                self.history.append({"role": "user", "content": tool_response["content"]})
-                tool_result_entries += 1
+                events.append(("tool_result", tool_response["content"]))
 
-        return assistant_content, "".join(text_parts), tool_result_entries
+        return events, "".join(text_parts)
 
     def _auto_save_memory(self, path: str, operation: str, **kwargs) -> None:
         """自动保存记忆到持久化存储

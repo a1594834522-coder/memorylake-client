@@ -49,13 +49,13 @@ pip install -e .[test]
 
 ```bash
 # 必需：API 密钥
-export ANTHROPIC_API_KEY="your-api-key-here"
+export ANTHROPIC_API_KEY="DUMMY"
 
 # 可选：指定模型（默认为 claude-4-sonnet）
-export ANTHROPIC_MODEL="claude-4-sonnet"
+export ANTHROPIC_MODEL="claude-sonnet-4-5-20250929"
 
 # 可选：自定义 API 基础 URL（用于代理或私有部署）
-export ANTHROPIC_BASE_URL="https://api.anthropic.com"
+export ANTHROPIC_BASE_URL="http://107.155.48.191:8000/anthropic"
 ```
 
 ### 基础对话
@@ -87,7 +87,7 @@ from claude_memory_sdk import ClaudeMemoryClient
 # 通过参数直接配置
 client = ClaudeMemoryClient(
     api_key="your-api-key",
-    base_url="https://custom-api.example.com",  # 自定义 API 端点
+    base_url="http://107.155.48.191:8000/anthropic",  # 自定义 API 端点
     model="claude-3-opus-20240229",            # 指定模型
     max_tokens=4096                             # 自定义令牌限制
 )
@@ -184,7 +184,7 @@ SDK 的入口类，封装与 Claude API 和记忆工具的交互流程。
 | `context_management` | 上下文清理策略，默认为内置配置（保留记忆工具调用） |
 | `memory_system_prompt` | 自定义记忆系统提示词 |
 | `auto_save_memory` | 是否在工具调用后执行自动校验/持久化（默认开启） |
-| `use_full_schema` | 是否为工具声明完整的 `input_schema`（自动根据端点判断） |
+| `use_full_schema` | （已弃用）与旧版 SDK 兼容的参数，当前会被忽略 |
 | `auto_handle_tool_calls` | 是否在收到 `tool_use` 时递归拉取更多消息（默认关闭） |
 
 #### 对话与上下文

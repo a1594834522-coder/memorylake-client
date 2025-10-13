@@ -31,9 +31,7 @@ class MemoryBackendTool(BetaAbstractMemoryTool):
         self,
         backend: BaseMemoryBackend,
         auto_save_callback: Optional[Callable[[str, str, dict], None]] = None,
-        tool_overrides: Optional[dict] = None,
     ) -> None:
-        self._tool_overrides = tool_overrides
         super().__init__()
         self._backend = backend
         self._auto_save_callback = auto_save_callback
@@ -42,12 +40,6 @@ class MemoryBackendTool(BetaAbstractMemoryTool):
         extra_data = extra or {}
         if self._auto_save_callback is not None:
             self._auto_save_callback(path, operation, extra_data)
-
-    def to_dict(self):  # type: ignore[override]
-        base_dict = super().to_dict()
-        if self._tool_overrides:
-            base_dict.update(self._tool_overrides)
-        return base_dict
 
     def view(self, command: BetaMemoryTool20250818ViewCommand) -> str:
         view_range = tuple(command.view_range) if command.view_range else None
