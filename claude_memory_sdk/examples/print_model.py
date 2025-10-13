@@ -8,11 +8,11 @@ from pathlib import Path
 # Ensure the project root is importable when running from source.
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-os.environ["ANTHROPIC_API_KEY"] = "DUMMY"
+os.environ["ANTHROPIC_API_KEY"] = "xxx"
 
 os.environ["ANTHROPIC_MODEL"] = "claude-sonnet-4-5"
 
-os.environ["ANTHROPIC_BASE_URL"] = "http://107.155.48.191:8000/anthropic"
+os.environ["ANTHROPIC_BASE_URL"] = "xxx"
 
 from claude_memory_sdk import ClaudeMemoryClient
 

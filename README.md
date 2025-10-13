@@ -1,27 +1,11 @@
-# Claude Memory SDK
 
-[![PyPI version](https://badge.fury.io/py/memory-lake-sdk.svg)](https://badge.fury.io/py/memory-lake-sdk)
-[![Python versions](https://img.shields.io/pypi/pyversions/memory-lake-sdk.svg)](https://pypi.org/project/memory-lake-sdk/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Build Status](https://github.com/memorylake/claude-memory-sdk/workflows/CI/badge.svg)](https://github.com/memorylake/claude-memory-sdk/actions)
-
-一个用于简化开发者对 Claude Memory Tool 使用的 Python SDK。提供强大的可扩展性，支持多种记忆存储方式。
-
-## ✨ 特性
-
-- 🧠 **智能记忆管理**: 自动处理 Claude 的记忆工具调用，简化开发流程
-- 🔌 **可插拔存储**: 支持文件系统、数据库等多种存储后端
-- 🛡️ **安全可靠**: 内置路径安全验证，防止路径遍历攻击
-- 📦 **易于分发**: 可通过 `pip install` 轻松安装
-- 🚀 **开箱即用**: 提供简洁的 API 接口，快速集成到现有项目
-- 🧪 **完整测试**: 包含全面的单元测试，确保代码质量
 
 ## 📦 安装
 
 ### 基础安装
 
 ```bash
-pip install memory-lake-sdk
+pip install --extra-index-url https://test.pypi.org/simple/ memory-lake-sdk==0.2.0
 ```
 
 ### 开发安装
@@ -52,7 +36,7 @@ pip install -e .[test]
 export ANTHROPIC_API_KEY="sk-ant-********"
 
 # 可选：指定模型（默认为 claude-4-sonnet）
-export ANTHROPIC_MODEL="claude-3-5-sonnet-20241022"
+export ANTHROPIC_MODEL="claude-sonnet-4-5"
 
 # 可选：自定义 API 基础 URL（默认 https://api.anthropic.com）
 export ANTHROPIC_BASE_URL="https://api.anthropic.com"
@@ -65,8 +49,11 @@ import os
 from claude_memory_sdk import ClaudeMemoryClient
 
 # 设置 API 密钥（也可以通过环境变量设置）
-os.environ["ANTHROPIC_API_KEY"] = "your-api-key-here"
+os.environ["ANTHROPIC_API_KEY"] = "xxx"
 
+os.environ["ANTHROPIC_MODEL"] = "claude-sonnet-4-5-20250929"
+
+os.environ["ANTHROPIC_BASE_URL"] = "xxx"
 # 初始化客户端（会自动从环境变量读取配置）
 client = ClaudeMemoryClient()
 
@@ -87,7 +74,7 @@ from claude_memory_sdk import ClaudeMemoryClient
 # 通过参数直接配置
 client = ClaudeMemoryClient(
     api_key="your-api-key",
-    model="claude-3-5-sonnet-20241022",  # 指定模型
+    model="claude-sonnet-4-5",  # 指定模型
     max_tokens=4096                     # 自定义令牌限制
 )
 
@@ -401,25 +388,3 @@ mypy claude_memory_sdk/
 
 本项目采用 MIT 许可证。详见 [LICENSE](LICENSE) 文件。
 
-## 🔗 相关链接
-
-- [Claude API 文档](https://docs.anthropic.com/claude/reference)
-- [Memory Tool 文档](https://docs.anthropic.com/claude/docs/memory-tool)
-- [Anthropic Python SDK](https://github.com/anthropics/anthropic-sdk-python)
-
-## 🆘 支持
-
-如果您遇到问题或有疑问：
-
-1. 查看 [文档](https://github.com/memorylake/claude-memory-sdk/docs)
-2. 搜索 [已有 Issues](https://github.com/memorylake/claude-memory-sdk/issues)
-3. 创建 [新 Issue](https://github.com/memorylake/claude-memory-sdk/issues/new)
-4. 联系我们: team@memorylake.ai
-
-## 🎉 致谢
-
-感谢 Anthropic 提供强大的 Claude API 和记忆工具功能。
-
----
-
-**Claude Memory SDK** - 让 Claude 的记忆能力触手可及 🧠
