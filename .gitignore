@@ -179,6 +179,14 @@ cython_debug/
 memory/
 *.mem
 *.backup
+# Repo-specific additions
+venv/
+*.in
+.pyscn/
+.serena/
+官方SDK参考.md
+官方SDK参考2.md
+记忆工具参考文档.md
 
 # Server runtime files
 *.pid

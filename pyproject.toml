@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "memory-lake-sdk"
-dynamic = ["version"]
-description = "简化开发者对 Claude Memory Tool 使用的 Python SDK"
+name = "memorylake"
+version = "0.1.0"
+description = "Lightweight filesystem helper for managing Anthropic memory tool data."
 readme = "README.md"
 license = {file = "LICENSE"}
 authors = [
@@ -36,13 +36,12 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    "Topic :: Software Development :: Libraries :: Python Modules",
-    "Topic :: Scientific/Engineering :: Artificial Intelligence",
-    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+    "Topic :: Software Development :: Libraries :: Python Modules"
 ]
 requires-python = ">=3.8"
 dependencies = [
     "anthropic>=0.39.0",
+    "pydantic>=2.0",
 ]
 
 [project.optional-dependencies]
@@ -65,12 +64,6 @@ test = [
     "pytest-mock>=3.8.0",
 ]
 
-[project.scripts]
-claude-memory-chat = "memory_lake_sdk.examples.basic_chat:main"
-claude-memory-manage = "memory_lake_sdk.examples.manage_memory:main"
-memory-lake-chat = "memory_lake_sdk.examples.basic_chat:main"
-memory-lake-manage = "memory_lake_sdk.examples.manage_memory:main"
-
 [project.urls]
 Homepage = "https://github.com/memorylake/memory-lake-sdk"
 Documentation = "https://github.com/memorylake/memory-lake-sdk/docs"
@@ -82,15 +75,9 @@ Repository = "https://github.com/memorylake/memory-lake-sdk"
 include-package-data = true
 license-files = ["LICENSE"]
 
-[tool.setuptools.package-data]
-memory_lake_sdk = ["examples/*.py", "examples/*.md"]
-
-[tool.setuptools.dynamic]
-version = {attr = "memory_lake_sdk.__version__"}
-
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["memory_lake_sdk*"]
+include = ["memorylake*"]
 exclude = ["tests*"]
 
 [tool.black]
@@ -115,7 +102,7 @@ extend-exclude = '''
 profile = "black"
 multi_line_output = 3
 line_length = 88
-known_first_party = ["memory_lake_sdk"]
+known_first_party = ["memorylake"]
 
 [tool.mypy]
 python_version = "3.8"
@@ -136,7 +123,7 @@ strict_equality = true
 minversion = "7.0"
 addopts = "-ra -q --strict-markers --strict-config"
 testpaths = [
-    "memory_lake_sdk/tests",
+    "tests",
 ]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
@@ -145,7 +132,7 @@ markers = [
 ]
 
 [tool.coverage.run]
-source = ["memory_lake_sdk"]
+source = ["memorylake"]
 omit = [
     "*/tests/*",
     "*/examples/*",
