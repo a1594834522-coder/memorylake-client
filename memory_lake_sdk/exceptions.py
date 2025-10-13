@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Claude Memory SDK 异常类定义
+Memory Lake SDK 异常类定义
 
 定义了 SDK 中使用的各种异常类型，用于更好地处理错误情况。
 """

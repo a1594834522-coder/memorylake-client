@@ -10,8 +10,8 @@ import sys
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
 
-from claude_memory_sdk import BaseMemoryBackend
-from claude_memory_sdk.exceptions import MemoryBackendError, MemoryFileOperationError, MemoryPathError
+from memory_lake_sdk import BaseMemoryBackend
+from memory_lake_sdk.exceptions import MemoryBackendError, MemoryFileOperationError, MemoryPathError
 
 
 class InMemoryBackend(BaseMemoryBackend):
@@ -200,7 +200,7 @@ def main(argv: Optional[List[str]] = None) -> None:
     parser.add_argument(
         "--with-client",
         action="store_true",
-        help="尝试使用 ClaudeMemoryClient 加载自定义后端（需要 ANTHROPIC_API_KEY）",
+        help="尝试使用 MemoryLakeClient 加载自定义后端（需要 ANTHROPIC_API_KEY）",
     )
     args = parser.parse_args(argv)
 
@@ -212,17 +212,17 @@ def main(argv: Optional[List[str]] = None) -> None:
         sys.exit(1)
 
     if args.with_client:
-        from claude_memory_sdk import ClaudeMemoryClient
+        from memory_lake_sdk import MemoryLakeClient
 
         try:
-            client = ClaudeMemoryClient(memory_backend=backend, auto_save_memory=False)
+            client = MemoryLakeClient(memory_backend=backend, auto_save_memory=False)
         except ValueError as exc:
-            print(f"[提示] 创建 ClaudeMemoryClient 失败：{exc}", file=sys.stderr)
+            print(f"[提示] 创建 MemoryLakeClient 失败：{exc}", file=sys.stderr)
             print("       请设置 ANTHROPIC_API_KEY 环境变量后重试。", file=sys.stderr)
             return
 
-        print("\n>>> 使用 ClaudeMemoryClient 操作自定义后端")
-        client.add_memory("/memories/session.txt", "ClaudeMemoryClient 已连接到自定义后端。")
+        print("\n>>> 使用 MemoryLakeClient 操作自定义后端")
+        client.add_memory("/memories/session.txt", "MemoryLakeClient 已连接到自定义后端。")
         print(client.get_memory("/memories/session.txt"))
 
 

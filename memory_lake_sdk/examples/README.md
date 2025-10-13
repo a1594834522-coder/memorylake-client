@@ -1,11 +1,11 @@
-# Claude Memory SDK 示例
+# Memory Lake SDK 示例
 
-本目录包含了 Claude Memory SDK 的各种使用示例，帮助开发者快速上手。
+本目录包含了 Memory Lake SDK 的各种使用示例，帮助开发者快速上手。
 
 ## 示例文件列表
 
 ### 1. basic_chat.py - 基础聊天示例
-演示如何使用 Claude Memory SDK 进行交互式对话功能。
+演示如何使用 Memory Lake SDK 进行交互式对话功能。
 
 **功能演示：**
 - 客户端初始化
@@ -20,14 +20,14 @@
 - `clear` - 清除对话历史
 - `stats` - 显示记忆统计
 - `memories` - 查看记忆内容
-- 直接输入消息与Claude对话
+- 直接输入消息与Claude 对话
 
 **自动记忆功能：**
 当用户输入包含"记住"、"存储"、"保存"、"我的信息"等关键词时，系统会自动将对话内容保存到记忆中。
 
 **运行方式：**
 ```bash
-python claude_memory_sdk/examples/basic_chat.py
+python memory_lake_sdk/examples/basic_chat.py
 ```
 
 ### 2. manage_memory.py - 记忆管理示例
@@ -42,7 +42,7 @@ python claude_memory_sdk/examples/basic_chat.py
 
 **运行方式：**
 ```bash
-python claude_memory_sdk/examples/manage_memory.py
+python memory_lake_sdk/examples/manage_memory.py
 ```
 
 ### 3. custom_backend.py - 自定义后端示例
@@ -56,7 +56,7 @@ python claude_memory_sdk/examples/manage_memory.py
 
 **运行方式：**
 ```bash
-python claude_memory_sdk/examples/custom_backend.py
+python memory_lake_sdk/examples/custom_backend.py
 ```
 
 ## 使用前准备

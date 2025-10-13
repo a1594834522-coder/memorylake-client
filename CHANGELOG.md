@@ -1,13 +1,13 @@
 # 更新日志
 
-本文档记录了 Claude Memory SDK 的所有重要更改。
+本文档记录了 Memory Lake SDK 的所有重要更改。
 
 ## [0.2.0] - 2025-01-13
 
 ### 新增
 - 📄 新增 MIT `LICENSE`、`MANIFEST.in` 等发布所需文件
-- 🛠️ 提供 `claude_memory_sdk.examples.manage_memory` 与 `custom_backend` 示例脚本
-- 📦 `claude_memory_sdk.examples` 现作为正式子包发布，并附带示例文档
+- 🛠️ 提供 `memory_lake_sdk.examples.manage_memory` 与 `custom_backend` 示例脚本
+- 📦 `memory_lake_sdk.examples` 现作为正式子包发布，并附带示例文档
 - 🧰 README 新增 PyPI 发布流程说明
 - 🔁 PyPI 发布包更名为 `memory-lake-sdk`
 
@@ -30,7 +30,7 @@
 - 📦 PyPI 包配置和构建支持
 
 ### 核心功能
-- **ClaudeMemoryClient**: 主客户端类，提供对话和记忆管理
+- **MemoryLakeClient**: 主客户端类，提供对话和记忆管理
 - **BaseMemoryBackend**: 抽象基类，支持自定义存储后端
 - **FileSystemMemoryBackend**: 默认文件系统存储实现
 - **完整异常体系**: 包含各种错误处理类型

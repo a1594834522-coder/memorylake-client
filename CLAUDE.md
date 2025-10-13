@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概述
 
-这是一个 Claude Memory SDK 项目，旨在为开发者提供简化的 Claude Memory Tool 使用接口。项目包含完整的 Python SDK 实现，支持可插拔的记忆存储后端。
+这是一个 Memory Lake SDK 项目，旨在为开发者提供简化的 Claude Memory Tool 使用接口。项目包含完整的 Python SDK 实现，支持可插拔的记忆存储后端。
 
 ## 常用开发命令
 
@@ -27,32 +27,32 @@ pre-commit install
 pytest
 
 # 运行测试并生成覆盖率报告
-pytest --cov=claude_memory_sdk --cov-report=html
+pytest --cov=memory_lake_sdk --cov-report=html
 
 # 运行特定测试文件
-pytest claude_memory_sdk/tests/test_client.py
-pytest claude_memory_sdk/tests/test_memory_backend.py
+pytest memory_lake_sdk/tests/test_client.py
+pytest memory_lake_sdk/tests/test_memory_backend.py
 
 # 运行特定测试函数
-pytest claude_memory_sdk/tests/test_client.py::ClaudeMemoryClientTest::test_chat
+pytest memory_lake_sdk/tests/test_client.py::MemoryLakeClientTest::test_chat
 ```
 
 ### 代码质量检查
 ```powershell
 # 代码格式化
-black claude_memory_sdk/
+black memory_lake_sdk/
 
 # 导入排序
-isort claude_memory_sdk/
+isort memory_lake_sdk/
 
 # 代码检查
-flake8 claude_memory_sdk/
+flake8 memory_lake_sdk/
 
 # 类型检查
-mypy claude_memory_sdk/
+mypy memory_lake_sdk/
 
 # 安全检查
-bandit -r claude_memory_sdk/
+bandit -r memory_lake_sdk/
 safety check
 ```
 
@@ -74,10 +74,10 @@ twine upload dist/*
 ### 示例运行
 ```powershell
 # 运行基础聊天示例
-python -m claude_memory_sdk.examples.basic_chat
+python -m memory_lake_sdk.examples.basic_chat
 
 # 运行记忆管理示例
-python -m claude_memory_sdk.examples.manage_memory
+python -m memory_lake_sdk.examples.manage_memory
 
 # 或使用安装后的命令行工具
 claude-memory-chat
@@ -95,18 +95,18 @@ claude-memory-manage
 
 ### 关键组件
 
-#### ClaudeMemoryClient (`claude_memory_sdk/client.py`)
+#### MemoryLakeClient (`memory_lake_sdk/client.py`)
 - 主要客户端类，处理与 Claude API 的交互
 - 自动处理记忆工具调用循环
 - 支持上下文管理和对话历史
 - 核心方法：`chat()`, `add_memory()`, `get_memory()`, `delete_memory()`
 
-#### BaseMemoryBackend (`claude_memory_sdk/memory_backend.py`)
+#### BaseMemoryBackend (`memory_lake_sdk/memory_backend.py`)
 - 抽象基类，定义记忆存储接口
 - 强制所有实现包含安全检查
 - 抽象方法：`view()`, `create()`, `str_replace()`, `insert()`, `delete()`, `rename()`
 
-#### FileSystemMemoryBackend (`claude_memory_sdk/memory_backend.py`)
+#### FileSystemMemoryBackend (`memory_lake_sdk/memory_backend.py`)
 - 默认的文件系统存储实现
 - 包含严格的路径安全检查（`_get_safe_path()`）
 - 防止路径遍历攻击
@@ -150,8 +150,8 @@ claude-memory-manage
 ## 项目结构
 
 ```
-claude_memory_sdk/
-├── claude_memory_sdk/
+memory_lake_sdk/
+├── memory_lake_sdk/
 │   ├── __init__.py              # 包初始化和版本信息
 │   ├── client.py                # 主客户端类
 │   ├── memory_backend.py        # 记忆后端抽象和实现

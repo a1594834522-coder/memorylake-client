@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Claude Memory SDK 安装配置
+Memory Lake SDK 安装配置
 """
 
 from setuptools import setup, find_packages
@@ -12,11 +12,11 @@ def read_readme():
     if os.path.exists(readme_path):
         with open(readme_path, 'r', encoding='utf-8') as f:
             return f.read()
-    return "Claude Memory SDK - 简化开发者对 Claude Memory Tool 使用的 Python SDK"
+    return "Memory Lake SDK - 简化开发者对 Claude Memory Tool 使用的 Python SDK"
 
 # 读取版本信息
 def get_version():
-    version_file = os.path.join(os.path.dirname(__file__), 'claude_memory_sdk', '__init__.py')
+    version_file = os.path.join(os.path.dirname(__file__), 'memory_lake_sdk', '__init__.py')
     with open(version_file, 'r', encoding='utf-8') as f:
         for line in f:
             if line.startswith('__version__'):
@@ -31,12 +31,12 @@ setup(
     description="简化开发者对 Claude Memory Tool 使用的 Python SDK",
     long_description=read_readme(),
     long_description_content_type="text/markdown",
-    url="https://github.com/memorylake/claude-memory-sdk",
+    url="https://github.com/memorylake/memory-lake-sdk",
     project_urls={
-        "Bug Tracker": "https://github.com/memorylake/claude-memory-sdk/issues",
-        "Documentation": "https://github.com/memorylake/claude-memory-sdk/docs",
-        "Source Code": "https://github.com/memorylake/claude-memory-sdk",
-        "Changelog": "https://github.com/memorylake/claude-memory-sdk/blob/main/CHANGELOG.md",
+        "Bug Tracker": "https://github.com/memorylake/memory-lake-sdk/issues",
+        "Documentation": "https://github.com/memorylake/memory-lake-sdk/docs",
+        "Source Code": "https://github.com/memorylake/memory-lake-sdk",
+        "Changelog": "https://github.com/memorylake/memory-lake-sdk/blob/main/CHANGELOG.md",
     },
     packages=find_packages(),
     classifiers=[
@@ -80,13 +80,15 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "claude-memory-chat=claude_memory_sdk.examples.basic_chat:main",
-            "claude-memory-manage=claude_memory_sdk.examples.manage_memory:main",
+            "claude-memory-chat=memory_lake_sdk.examples.basic_chat:main",
+            "claude-memory-manage=memory_lake_sdk.examples.manage_memory:main",
+            "memory-lake-chat=memory_lake_sdk.examples.basic_chat:main",
+            "memory-lake-manage=memory_lake_sdk.examples.manage_memory:main",
         ],
     },
     include_package_data=True,
     package_data={
-        "claude_memory_sdk": [
+        "memory_lake_sdk": [
             "examples/*.py",
             "examples/*.md",
         ],

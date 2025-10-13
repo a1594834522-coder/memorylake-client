@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Claude Memory SDK
+Memory Lake SDK
 
 一个用于简化 Claude Memory Tool 使用的 Python SDK。
 """
@@ -10,7 +10,7 @@ __version__ = "0.2.0"
 __author__ = "Memory Lake Team"
 __email__ = "team@memorylake.ai"
 
-from .client import ClaudeMemoryClient
+from .client import MemoryLakeClient
 from .memory_backend import BaseMemoryBackend, FileSystemMemoryBackend
 from .memory_tool import MemoryBackendTool
 from .exceptions import (
@@ -21,7 +21,7 @@ from .exceptions import (
 )
 
 __all__ = [
-    "ClaudeMemoryClient",
+    "MemoryLakeClient",
     "BaseMemoryBackend",
     "FileSystemMemoryBackend",
     "MemoryBackendTool",

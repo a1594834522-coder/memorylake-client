@@ -13,7 +13,7 @@ import anthropic
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from claude_memory_sdk import ClaudeMemoryClient
+from memory_lake_sdk import MemoryLakeClient
 
 
 def _extract_tool_events(message: Dict[str, Union[str, List[Dict[str, object]]]]) -> List[str]:
@@ -49,7 +49,7 @@ def _print_tool_activity(before: Sequence[Dict[str, object]], after: Sequence[Di
         print("[调试] 本轮对话未触发记忆工具调用。")
 
 
-def _print_memories(client: ClaudeMemoryClient) -> None:
+def _print_memories(client: MemoryLakeClient) -> None:
     memories = client.list_memories()
     if not memories:
         print("[系统] 当前没有记忆文件。")
@@ -62,14 +62,14 @@ def _print_memories(client: ClaudeMemoryClient) -> None:
 
 
 def main() -> None:
-    print("=== Claude Memory SDK 基础聊天示例 ===\n")
+    print("=== Memory Lake SDK 基础聊天示例 ===\n")
     print(f"Anthropic SDK 版本: {anthropic.__version__}\n")
 
     if not os.getenv("ANTHROPIC_API_KEY"):
         print("错误：未检测到 ANTHROPIC_API_KEY 环境变量，请先配置官方 API Key。")
         return
 
-    client = ClaudeMemoryClient()
+    client = MemoryLakeClient()
 
     print("指令说明：")
     print("  /exit            退出程序")

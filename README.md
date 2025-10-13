@@ -12,8 +12,8 @@ pip install --extra-index-url https://test.pypi.org/simple/ memory-lake-sdk==0.2
 
 ```bash
 # 克隆仓库
-git clone https://github.com/memorylake/claude-memory-sdk.git
-cd claude-memory-sdk
+git clone https://github.com/memorylake/memory-lake-sdk.git
+cd memory-lake-sdk
 
 # 安装开发依赖
 pip install -e .[dev]
@@ -46,7 +46,7 @@ export ANTHROPIC_BASE_URL="https://api.anthropic.com"
 
 ```python
 import os
-from claude_memory_sdk import ClaudeMemoryClient
+from memory_lake_sdk import MemoryLakeClient
 
 # 设置 API 密钥（也可以通过环境变量设置）
 os.environ["ANTHROPIC_API_KEY"] = "xxx"
@@ -55,7 +55,7 @@ os.environ["ANTHROPIC_MODEL"] = "claude-sonnet-4-5-20250929"
 
 os.environ["ANTHROPIC_BASE_URL"] = "xxx"
 # 初始化客户端（会自动从环境变量读取配置）
-client = ClaudeMemoryClient()
+client = MemoryLakeClient()
 
 # 开始对话
 response = client.chat("你好，请记住我喜欢喝咖啡")
@@ -69,10 +69,10 @@ print(response2)  # 会提到咖啡
 ### 使用自定义配置
 
 ```python
-from claude_memory_sdk import ClaudeMemoryClient
+from memory_lake_sdk import MemoryLakeClient
 
 # 通过参数直接配置
-client = ClaudeMemoryClient(
+client = MemoryLakeClient(
     api_key="your-api-key",
     model="claude-sonnet-4-5",  # 指定模型
     max_tokens=4096                     # 自定义令牌限制
@@ -85,9 +85,9 @@ print(response)
 ### 手动记忆管理
 
 ```python   
-from claude_memory_sdk import ClaudeMemoryClient        
+from memory_lake_sdk import MemoryLakeClient        
 
-client = ClaudeMemoryClient()
+client = MemoryLakeClient()
 
 # 添加用户偏好
 client.add_memory("/memories/preferences.xml", """
@@ -111,7 +111,7 @@ print(response)
 ### 自定义存储后端
 
 ```python
-from claude_memory_sdk import ClaudeMemoryClient, BaseMemoryBackend
+from memory_lake_sdk import MemoryLakeClient, BaseMemoryBackend
 import sqlite3
 
 class DatabaseMemoryBackend(BaseMemoryBackend):
@@ -135,7 +135,7 @@ class DatabaseMemoryBackend(BaseMemoryBackend):
 
 # 使用自定义后端
 custom_backend = DatabaseMemoryBackend("./memory.db")
-client = ClaudeMemoryClient(memory_backend=custom_backend)
+client = MemoryLakeClient(memory_backend=custom_backend)
 ```
 
 ## 📖 核心概念
@@ -154,7 +154,7 @@ client = ClaudeMemoryClient(memory_backend=custom_backend)
 
 ## 🎯 API 参考
 
-### ClaudeMemoryClient
+### MemoryLakeClient
 
 SDK 的入口类，封装与 Claude API 和记忆工具的交互流程。
 
@@ -218,7 +218,7 @@ SDK 的入口类，封装与 Claude API 和记忆工具的交互流程。
 
 ### MemoryBackendTool
 
-`MemoryBackendTool` 继承自官方 `BetaAbstractMemoryTool`，将任何 `BaseMemoryBackend` 实例包装成可注入 `tool_runner` 的工具。默认 `ClaudeMemoryClient` 会实例化该工具并将其传入 API 请求。自定义后端只需实现基类接口即可自动支持记忆工具调用。
+`MemoryBackendTool` 继承自官方 `BetaAbstractMemoryTool`，将任何 `BaseMemoryBackend` 实例包装成可注入 `tool_runner` 的工具。默认 `MemoryLakeClient` 会实例化该工具并将其传入 API 请求。自定义后端只需实现基类接口即可自动支持记忆工具调用。
 
 ### BaseMemoryBackend
 
@@ -265,7 +265,7 @@ SDK 的入口类，封装与 Claude API 和记忆工具的交互流程。
 SDK 支持自动上下文管理，当对话过长时自动清理旧的工具调用结果：
 
 ```python
-client = ClaudeMemoryClient(
+client = MemoryLakeClient(
     context_management={
         "edits": [
             {
@@ -288,17 +288,17 @@ client = ClaudeMemoryClient(
 pytest
 
 # 运行测试并生成覆盖率报告
-pytest --cov=claude_memory_sdk --cov-report=html
+pytest --cov=memory_lake_sdk --cov-report=html
 
 # 运行特定测试
-pytest claude_memory_sdk/tests/test_client.py
+pytest memory_lake_sdk/tests/test_client.py
 ```
 
 ## 📁 项目结构
 
 ```
-claude_memory_sdk/
-├── claude_memory_sdk/
+memory_lake_sdk/
+├── memory_lake_sdk/
 │   ├── __init__.py          # 包初始化
 │   ├── client.py            # 主客户端类
 │   ├── memory_backend.py    # 记忆后端实现
@@ -321,7 +321,7 @@ claude_memory_sdk/
 
 ## 🚢 发布指南
 
-1. 更新版本号：修改 `claude_memory_sdk/__version__` 并在 `CHANGELOG.md` 中记录变更。
+1. 更新版本号：修改 `memory_lake_sdk/__version__` 并在 `CHANGELOG.md` 中记录变更。
 2. 清理旧的构建产物：
    ```bash
    rm -rf build dist *.egg-info
@@ -353,8 +353,8 @@ claude_memory_sdk/
 
 ```bash
 # 克隆项目
-git clone https://github.com/memorylake/claude-memory-sdk.git
-cd claude-memory-sdk
+git clone https://github.com/memorylake/memory-lake-sdk.git
+cd memory-lake-sdk
 
 # 创建虚拟环境
 python -m venv venv
@@ -378,10 +378,10 @@ pre-commit install
 
 ```bash
 # 运行所有检查
-black claude_memory_sdk/
-isort claude_memory_sdk/
-flake8 claude_memory_sdk/
-mypy claude_memory_sdk/
+black memory_lake_sdk/
+isort memory_lake_sdk/
+flake8 memory_lake_sdk/
+mypy memory_lake_sdk/
 ```
 
 ## 📄 许可证

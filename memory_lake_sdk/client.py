@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Claude Memory SDK 主客户端
+Memory Lake SDK 主客户端
 
-提供了与 Claude API 和记忆工具交互的主要接口。
+提供了与 Anthropic Claude API 和记忆工具交互的主要接口。
 """
 
 import os
@@ -41,10 +41,10 @@ DEFAULT_CONTEXT_MANAGEMENT = {
 }
 
 
-class ClaudeMemoryClient:
-    """Claude Memory SDK 主客户端类
+class MemoryLakeClient:
+    """Memory Lake SDK 主客户端类
 
-    提供了与 Claude API 交互并处理记忆工具调用的完整功能。
+    提供了与 Anthropic Claude API 交互并处理记忆工具调用的完整功能。
     """
 
     def __init__(
@@ -60,7 +60,7 @@ class ClaudeMemoryClient:
         use_full_schema: Optional[bool] = None,
         auto_handle_tool_calls: bool = False,
     ):
-        """初始化 Claude Memory 客户端
+        """初始化 Memory Lake 客户端
 
         Args:
             api_key: Anthropic API 密钥，如果为 None 则从环境变量 ANTHROPIC_API_KEY 获取
@@ -388,7 +388,7 @@ class ClaudeMemoryClient:
 
     def interactive_loop(self):
         """启动交互式对话循环"""
-        print("Claude Memory SDK - 交互式对话")
+        print("Memory Lake SDK - 交互式对话")
         print("命令: /quit, /clear, /memory_view, /memory_clear, /history, /autosave, /help")
 
         while True:
@@ -437,8 +437,8 @@ class ClaudeMemoryClient:
                 continue
             elif user_input.lower() == "/help":
                 print("\n帮助:")
-                print("- 直接输入消息与Claude对话")
-                print("- Claude会自动管理记忆")
+                print("- 直接输入消息与 Claude 对话")
+                print("- Memory Lake 会自动管理记忆")
                 print(f"- 自动保存: {'已启用' if self.auto_save_memory else '已禁用'}")
                 continue
             elif not user_input:

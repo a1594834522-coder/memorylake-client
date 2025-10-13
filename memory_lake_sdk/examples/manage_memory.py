@@ -10,8 +10,8 @@ import sys
 from pathlib import Path
 from typing import Callable, Dict, Optional, Tuple
 
-from claude_memory_sdk import FileSystemMemoryBackend
-from claude_memory_sdk.exceptions import MemoryBackendError, MemoryFileOperationError, MemoryPathError
+from memory_lake_sdk import FileSystemMemoryBackend
+from memory_lake_sdk.exceptions import MemoryBackendError, MemoryFileOperationError, MemoryPathError
 
 
 CommandHandler = Callable[[FileSystemMemoryBackend, argparse.Namespace], Optional[str]]
@@ -100,7 +100,7 @@ def _cmd_restore(backend: FileSystemMemoryBackend, args: argparse.Namespace) -> 
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Claude Memory SDK 记忆管理示例",
+        description="Memory Lake SDK 记忆管理示例",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(

@@ -66,29 +66,31 @@ test = [
 ]
 
 [project.scripts]
-claude-memory-chat = "claude_memory_sdk.examples.basic_chat:main"
-claude-memory-manage = "claude_memory_sdk.examples.manage_memory:main"
+claude-memory-chat = "memory_lake_sdk.examples.basic_chat:main"
+claude-memory-manage = "memory_lake_sdk.examples.manage_memory:main"
+memory-lake-chat = "memory_lake_sdk.examples.basic_chat:main"
+memory-lake-manage = "memory_lake_sdk.examples.manage_memory:main"
 
 [project.urls]
-Homepage = "https://github.com/memorylake/claude-memory-sdk"
-Documentation = "https://github.com/memorylake/claude-memory-sdk/docs"
-Repository = "https://github.com/memorylake/claude-memory-sdk"
-"Bug Tracker" = "https://github.com/memorylake/claude-memory-sdk/issues"
-"Changelog" = "https://github.com/memorylake/claude-memory-sdk/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/memorylake/memory-lake-sdk"
+Documentation = "https://github.com/memorylake/memory-lake-sdk/docs"
+Repository = "https://github.com/memorylake/memory-lake-sdk"
+"Bug Tracker" = "https://github.com/memorylake/memory-lake-sdk/issues"
+"Changelog" = "https://github.com/memorylake/memory-lake-sdk/blob/main/CHANGELOG.md"
 
 [tool.setuptools]
 include-package-data = true
 license-files = ["LICENSE"]
 
 [tool.setuptools.package-data]
-claude_memory_sdk = ["examples/*.py", "examples/*.md"]
+memory_lake_sdk = ["examples/*.py", "examples/*.md"]
 
 [tool.setuptools.dynamic]
-version = {attr = "claude_memory_sdk.__version__"}
+version = {attr = "memory_lake_sdk.__version__"}
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["claude_memory_sdk*"]
+include = ["memory_lake_sdk*"]
 exclude = ["tests*"]
 
 [tool.black]
@@ -113,7 +115,7 @@ extend-exclude = '''
 profile = "black"
 multi_line_output = 3
 line_length = 88
-known_first_party = ["claude_memory_sdk"]
+known_first_party = ["memory_lake_sdk"]
 
 [tool.mypy]
 python_version = "3.8"
@@ -134,7 +136,7 @@ strict_equality = true
 minversion = "7.0"
 addopts = "-ra -q --strict-markers --strict-config"
 testpaths = [
-    "claude_memory_sdk/tests",
+    "memory_lake_sdk/tests",
 ]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
@@ -143,7 +145,7 @@ markers = [
 ]
 
 [tool.coverage.run]
-source = ["claude_memory_sdk"]
+source = ["memory_lake_sdk"]
 omit = [
     "*/tests/*",
     "*/examples/*",

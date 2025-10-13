@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Claude Memory SDK 记忆存储后端
+Memory Lake SDK 记忆存储后端
 
 定义了记忆存储的抽象接口和具体的文件系统实现。
 """

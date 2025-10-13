@@ -1,4 +1,4 @@
-# Claude Memory SDK 核心依赖
+# Memory Lake SDK 核心依赖
 anthropic>=0.39.0
 
 # 开发依赖（可选）

@@ -14,11 +14,11 @@ os.environ["ANTHROPIC_MODEL"] = "claude-sonnet-4-5"
 
 os.environ["ANTHROPIC_BASE_URL"] = "xxx"
 
-from claude_memory_sdk import ClaudeMemoryClient
+from memory_lake_sdk import MemoryLakeClient
 
 
 def main() -> None:
-    client = ClaudeMemoryClient()
+    client = MemoryLakeClient()
     print(f"Configured model (client.model): {client.model}")
 
     api_key = os.getenv("ANTHROPIC_API_KEY")
