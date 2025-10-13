@@ -78,7 +78,7 @@ class ClaudeMemoryClient:
         # 从环境变量获取配置
         api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
         base_url = base_url or os.getenv("ANTHROPIC_BASE_URL")
-        model = model or os.getenv("ANTHROPIC_MODEL", "claude-4-sonnet")
+        model = model or os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-5")
 
         if not api_key:
             raise ValueError("API 密钥未提供，请设置 api_key 参数或 ANTHROPIC_API_KEY 环境变量")
