@@ -18,5 +18,6 @@ rm -f ./.coverage
 TEST_SCOPE="${1:-memorylake}"
 python3 -m pytest -n logical --cov=. --cov-append --cov-report="" "${TEST_SCOPE}"
 
+# Generate coverage.xml, and print to console too
 coverage xml -o coverage.xml
 coverage report
