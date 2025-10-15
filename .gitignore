@@ -12,9 +12,17 @@ pytest_cache/
 .DS_Store
 memorylake.egg-info/
 build/
+.pytest_cache
 
 # Ignore coverage files
 coverage.xml
 .coverage
 .coverage.*
 .run
+
+AGENTS.md
+
+.cursor/
+.serena/
+
+
