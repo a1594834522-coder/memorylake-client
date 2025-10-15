@@ -193,7 +193,7 @@ def test_example_local_commands_and_exec(tmp_path: Any, capsys: pytest.CaptureFi
 
     assert handle_local_command("/memory-create /memories/demo.txt hello", tool, menu)
     output = capsys.readouterr().out
-    assert "已创建" in output
+    assert "Created" in output
 
     assert handle_local_command("/memory-list", tool, menu)
     output = capsys.readouterr().out
