@@ -45,32 +45,32 @@ def run_chat(
 
     messages: List[BetaMessageParam] = []
     local_menu: Dict[str, str] = {
-        "help": "显示命令",
-        "memory-view": "查看路径内容",
-        "memory-create": "创建文件",
-        "memory-insert": "插入文本",
-        "memory-replace": "字符串替换",
-        "memory-delete": "删除路径",
-        "memory-rename": "重命名",
-        "memory-exists": "检查存在性",
-        "memory-list": "列出目录",
-        "memory-clear": "清空全部记忆",
-        "memory-stats": "查看统计",
-        "memory-exec": "执行原始工具命令",
+        "help": "Show command list",
+        "memory-view": "View memory path",
+        "memory-create": "Create file",
+        "memory-insert": "Insert text",
+        "memory-replace": "Replace text",
+        "memory-delete": "Delete path",
+        "memory-rename": "Rename path",
+        "memory-exists": "Check existence",
+        "memory-list": "List directory",
+        "memory-clear": "Clear all memories",
+        "memory-stats": "View stats",
+        "memory-exec": "Execute raw tool command",
     }
 
     print(
-        f"🧠 Claude + MemoryTool 示例 (模型: {model}) · 输入 '/exit' 退出 "
-        f"· 记忆目录: {os.path.abspath(memory_path)}/memories"
+        f"🧠 Claude + MemoryTool demo (model: {model}) · type '/exit' to quit "
+        f"· memory directory: {os.path.abspath(memory_path)}/memories"
     )
-    print("本地命令: /help")
+    print("Local commands: /help")
 
     while True:
-        user_input = input("\n你: ").strip()
+        user_input = input("\nYou: ").strip()
         if not user_input:
             continue
         if user_input.lower() in {"/exit", "/quit"}:
-            print("会话结束，再见！")
+            print("Conversation ended.")
             break
 
         if user_input.startswith("/"):
@@ -134,113 +134,113 @@ def _handle_local_command(
         if name == "help":
             _print_menu(menu)
         elif name == "memory-view":
-            path = args[0] if args else _prompt("路径")
+            path = args[0] if args else _prompt("Path")
             view_range = None
             if len(args) >= 3:
                 view_range = (int(args[1]), int(args[2]))
             else:
-                range_input = _prompt("行范围(例如 1 10, 留空跳过)")
+                range_input = _prompt("Line range (e.g. 1 10, optional)")
                 if range_input:
                     tokens = range_input.replace(",", " ").split()
                     if len(tokens) == 2:
                         view_range = (int(tokens[0]), int(tokens[1]))
             print(memory_tool.view_path(path, view_range))
         elif name == "memory-create":
-            path = args[0] if args else _prompt("路径")
-            text = " ".join(args[1:]) if len(args) > 1 else _prompt("内容")
+            path = args[0] if args else _prompt("Path")
+            text = " ".join(args[1:]) if len(args) > 1 else _prompt("Content")
             memory_tool.create_file(path, text)
-            print("已创建")
+            print("Created")
         elif name == "memory-insert":
-            path = args[0] if args else _prompt("路径")
-            line_index = int(args[1]) if len(args) > 1 else int(_prompt("行号"))
-            text = " ".join(args[2:]) if len(args) > 2 else _prompt("文本")
+            path = args[0] if args else _prompt("Path")
+            line_index = int(args[1]) if len(args) > 1 else int(_prompt("Line number"))
+            text = " ".join(args[2:]) if len(args) > 2 else _prompt("Text")
             memory_tool.insert_line(path, line_index, text)
-            print("已插入")
+            print("Inserted")
         elif name == "memory-replace":
-            path = args[0] if args else _prompt("路径")
-            old = args[1] if len(args) > 1 else _prompt("原文本")
-            new = args[2] if len(args) > 2 else _prompt("新文本")
+            path = args[0] if args else _prompt("Path")
+            old = args[1] if len(args) > 1 else _prompt("Old text")
+            new = args[2] if len(args) > 2 else _prompt("New text")
             memory_tool.replace_text(path, old, new)
-            print("已替换")
+            print("Replaced")
         elif name == "memory-delete":
-            path = args[0] if args else _prompt("路径")
+            path = args[0] if args else _prompt("Path")
             memory_tool.delete_path(path)
-            print("已删除")
+            print("Deleted")
         elif name == "memory-rename":
-            old = args[0] if args else _prompt("原路径")
-            new = args[1] if len(args) > 1 else _prompt("新路径")
+            old = args[0] if args else _prompt("Old path")
+            new = args[1] if len(args) > 1 else _prompt("New path")
             memory_tool.rename_path(old, new)
-            print("已重命名")
+            print("Renamed")
         elif name == "memory-exists":
-            path = args[0] if args else _prompt("路径")
+            path = args[0] if args else _prompt("Path")
             exists = memory_tool.memory_exists(path)
-            print("存在" if exists else "不存在")
+            print("Exists" if exists else "Does not exist")
         elif name == "memory-list":
             path = args[0] if args else "/memories"
             entries = memory_tool.list_memories(path)
             if not entries:
-                print("(空)")
+                print("(empty)")
             else:
                 for item in entries:
                     print(item)
         elif name == "memory-clear":
             memory_tool.clear_all()
-            print("已清空")
+            print("Cleared")
         elif name == "memory-stats":
             for key, value in memory_tool.stats().items():
                 print(f"{key}: {value}")
         elif name == "memory-exec":
             _run_exec_command(memory_tool, args)
         else:
-            print("未知命令")
+            print("Unknown command")
     except MemoryToolError as exc:
-        print(f"错误: {exc}")
+        print(f"Error: {exc}")
     except ValueError as exc:
-        print(f"输入无效: {exc}")
+        print(f"Invalid input: {exc}")
     except Exception as exc:  # pragma: no cover - safety net
-        print(f"错误: {exc}")
+        print(f"Error: {exc}")
     return True
 
 
 def _run_exec_command(memory_tool: MemoryTool, args: List[str]) -> None:
-    command = args[0] if args else _prompt("命令(view/create/insert/str_replace/delete/rename)")
+    command = args[0] if args else _prompt("command (view/create/insert/str_replace/delete/rename)")
     extra = args[1:]
     payload: Dict[str, object] = {"command": command}
 
     if command == "view":
-        path = extra[0] if extra else _prompt("路径")
+        path = extra[0] if extra else _prompt("Path")
         payload["path"] = path
         if len(extra) >= 3:
             payload["view_range"] = [int(extra[1]), int(extra[2])]
         else:
-            range_input = _prompt("行范围(例如 1 10, 留空跳过)")
+            range_input = _prompt("Line range (e.g. 1 10, optional)")
             if range_input:
                 tokens = range_input.replace(",", " ").split()
                 if len(tokens) == 2:
                     payload["view_range"] = [int(tokens[0]), int(tokens[1])]
     elif command == "create":
-        path = extra[0] if extra else _prompt("路径")
-        text = " ".join(extra[1:]) if len(extra) > 1 else _prompt("内容")
+        path = extra[0] if extra else _prompt("Path")
+        text = " ".join(extra[1:]) if len(extra) > 1 else _prompt("Content")
         payload.update({"path": path, "file_text": text})
     elif command == "insert":
-        path = extra[0] if extra else _prompt("路径")
-        index = int(extra[1]) if len(extra) > 1 else int(_prompt("行号"))
-        text = " ".join(extra[2:]) if len(extra) > 2 else _prompt("文本")
+        path = extra[0] if extra else _prompt("Path")
+        index = int(extra[1]) if len(extra) > 1 else int(_prompt("Line number"))
+        text = " ".join(extra[2:]) if len(extra) > 2 else _prompt("Text")
         payload.update({"path": path, "insert_line": index, "insert_text": text})
     elif command == "str_replace":
-        path = extra[0] if extra else _prompt("路径")
-        old = extra[1] if len(extra) > 1 else _prompt("原文本")
-        new = extra[2] if len(extra) > 2 else _prompt("新文本")
+        path = extra[0] if extra else _prompt("Path")
+        old = extra[1] if len(extra) > 1 else _prompt("Old text")
+        new = extra[2] if len(extra) > 2 else _prompt("New text")
         payload.update({"path": path, "old_str": old, "new_str": new})
     elif command == "delete":
-        path = extra[0] if extra else _prompt("路径")
+        path = extra[0] if extra else _prompt("Path")
         payload["path"] = path
     elif command == "rename":
-        old = extra[0] if extra else _prompt("原路径")
-        new = extra[1] if len(extra) > 1 else _prompt("新路径")
+        old = extra[0] if extra else _prompt("Old path")
+        new = extra[1] if len(extra) > 1 else _prompt("New path")
         payload.update({"old_path": old, "new_path": new})
     else:
-        print("不支持的工具命令")
+        print("Unsupported tool command")
         return
 
     result = memory_tool.execute_tool_payload(payload)
@@ -248,10 +248,10 @@ def _run_exec_command(memory_tool: MemoryTool, args: List[str]) -> None:
 
 
 def _print_menu(menu: Dict[str, str]) -> None:
-    print("本地命令:")
+    print("Local commands:")
     for key, desc in menu.items():
         print(f"/{key} - {desc}")
-    print("/exit - 退出")
+    print("/exit - exit")
 
 
 def _prompt(label: str) -> str:

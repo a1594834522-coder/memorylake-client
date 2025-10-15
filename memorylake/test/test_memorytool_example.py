@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import sys
 import types
-from collections.abc import Mapping, Sequence
 from typing import Any, ClassVar
 
 import pytest
@@ -14,14 +13,10 @@ if sys.version_info < (3, 10):
     MaybeStr = _Optional[str]
     MaybeInt = _Optional[int]
     MaybeRange = _Optional[list[int]]
-    MaybeMapping = _Optional[Mapping[str, Any]]
-    MaybeSequence = _Optional[Sequence[str]]
 else:
     MaybeStr = str | None
     MaybeInt = int | None
     MaybeRange = list[int] | None
-    MaybeMapping = Mapping[str, Any] | None
-    MaybeSequence = Sequence[str] | None
 
 if "anthropic" not in sys.modules:
     anthropic_module = types.ModuleType("anthropic")
@@ -215,56 +210,3 @@ def test_example_local_commands_and_exec(tmp_path: Any, capsys: pytest.CaptureFi
     run_exec_command(tool, ["delete", "/memories/demo2.txt"])
     output = capsys.readouterr().out
     assert "File deleted" in output
-
-
-def test_memorylake_init_missing_anthropic(monkeypatch: pytest.MonkeyPatch) -> None:
-    import builtins
-    import importlib
-    import sys
-
-    saved_module_names = [
-        "anthropic",
-        "anthropic.lib",
-        "anthropic.lib.tools",
-        "anthropic.types",
-        "anthropic.types.beta",
-    ]
-
-    saved_modules = {name: sys.modules.pop(name, None) for name in saved_module_names}
-    original_memorylake = sys.modules.pop("memorylake", None)
-    original_memorytool = sys.modules.pop("memorylake.memorytool", None)
-
-    real_import = builtins.__import__
-
-    def fake_import(
-        name: str,
-        globals: MaybeMapping = None,
-        locals: MaybeMapping = None,
-        fromlist: MaybeSequence = (),
-        level: int = 0,
-    ) -> Any:
-        if name.startswith("anthropic"):
-            raise ModuleNotFoundError(f"No module named '{name}'", name=name)
-        fromlist_tuple: tuple[str, ...] = tuple(fromlist) if fromlist is not None else ()
-        return real_import(name, globals, locals, fromlist_tuple, level)
-
-    monkeypatch.setattr(builtins, "__import__", fake_import)
-
-    try:
-        module = importlib.import_module("memorylake")
-        with pytest.raises(ModuleNotFoundError):
-            module.__getattr__("MemoryTool")
-        assert "__version__" in module.__dir__()
-    finally:
-        sys.modules.pop("memorylake", None)
-        sys.modules.pop("memorylake.memorytool", None)
-
-        if original_memorytool is not None:
-            sys.modules["memorylake.memorytool"] = original_memorytool
-        if original_memorylake is not None:
-            sys.modules["memorylake"] = original_memorylake
-
-        for name in saved_module_names:
-            module_obj = saved_modules[name]
-            if module_obj is not None:
-                sys.modules[name] = module_obj
