@@ -19,9 +19,15 @@ callers can manage memories without synthesising command payloads themselves.
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Dict, List, Mapping, Optional, Tuple
 import shutil
+from collections.abc import Mapping
+from pathlib import Path
+from typing import Final
+
+try:
+    from typing import override
+except ImportError:  # pragma: no cover - Python < 3.12
+    from typing_extensions import override
 
 from anthropic.lib.tools import BetaAbstractMemoryTool
 from anthropic.types.beta import (
@@ -35,12 +41,7 @@ from anthropic.types.beta import (
 )
 from pydantic import TypeAdapter
 
-__all__ = [
-    "MemoryTool",
-    "MemoryToolError",
-    "MemoryToolPathError",
-    "MemoryToolOperationError",
-]
+__all__ = ["MemoryTool", "MemoryToolError", "MemoryToolPathError", "MemoryToolOperationError"]
 
 
 class MemoryToolError(Exception):
@@ -58,24 +59,27 @@ class MemoryToolOperationError(MemoryToolError):
 class MemoryTool(BetaAbstractMemoryTool):
     """Filesystem-backed implementation of the Anthropic memory tool contract."""
 
-    _MEMORY_ROOT_NAME = "memories"
-    _NAMESPACE_PREFIX = "/memories"
-    _COMMAND_ADAPTER = TypeAdapter(BetaMemoryTool20250818Command)
+    _MEMORY_ROOT_NAME: Final[str] = "memories"
+    _NAMESPACE_PREFIX: Final[str] = "/memories"
+    _COMMAND_ADAPTER: Final[TypeAdapter[BetaMemoryTool20250818Command]] = TypeAdapter(
+        BetaMemoryTool20250818Command
+    )
 
     def __init__(self, base_path: str | Path = "./memory") -> None:
         super().__init__()
-        self._base_path = Path(base_path).expanduser().resolve()
-        self._memory_root = self._base_path / self._MEMORY_ROOT_NAME
+        self._base_path: Path = Path(base_path).expanduser().resolve()
+        self._memory_root: Path = self._base_path / self._MEMORY_ROOT_NAME
         self._memory_root.mkdir(parents=True, exist_ok=True)
 
     # ------------------------------------------------------------------ #
     # Tool interface (invoked by Anthropic runtime)
     # ------------------------------------------------------------------ #
+    @override
     def view(self, command: BetaMemoryTool20250818ViewCommand) -> str:
         target = self._resolve_path(command.path)
 
         if target.is_dir():
-            entries: List[str] = []
+            entries: list[str] = []
             for item in sorted(target.iterdir()):
                 if item.name.startswith("."):
                     continue
@@ -103,19 +107,21 @@ class MemoryTool(BetaAbstractMemoryTool):
             base_idx = 1
 
         numbered = [f"{idx + base_idx:4d}: {line}" for idx, line in enumerate(content)]
-        output_lines = [f"File: {command.path}"]
+        output_lines: list[str] = [f"File: {command.path}"]
         if numbered:
             output_lines.extend(numbered)
         else:
             output_lines.append("(empty file)")
         return "\n".join(output_lines)
 
+    @override
     def create(self, command: BetaMemoryTool20250818CreateCommand) -> str:
         target = self._resolve_path(command.path)
         self._ensure_parent_dir(target)
         target.write_text(command.file_text, encoding="utf-8")
         return f"File created: {command.path}"
 
+    @override
     def str_replace(self, command: BetaMemoryTool20250818StrReplaceCommand) -> str:
         target = self._resolve_path(command.path)
         if not target.is_file():
@@ -133,6 +139,7 @@ class MemoryTool(BetaAbstractMemoryTool):
         target.write_text(content.replace(command.old_str, command.new_str), encoding="utf-8")
         return f"File updated: {command.path}"
 
+    @override
     def insert(self, command: BetaMemoryTool20250818InsertCommand) -> str:
         target = self._resolve_path(command.path)
         if not target.is_file():
@@ -148,6 +155,7 @@ class MemoryTool(BetaAbstractMemoryTool):
         target.write_text("\n".join(lines) + "\n", encoding="utf-8")
         return f"Line inserted in {command.path}"
 
+    @override
     def delete(self, command: BetaMemoryTool20250818DeleteCommand) -> str:
         if command.path.rstrip("/") == self._NAMESPACE_PREFIX:
             raise MemoryToolPathError("refusing to delete the /memories root")
@@ -162,6 +170,7 @@ class MemoryTool(BetaAbstractMemoryTool):
 
         raise MemoryToolOperationError(f"path does not exist: {command.path}")
 
+    @override
     def rename(self, command: BetaMemoryTool20250818RenameCommand) -> str:
         source = self._resolve_path(command.old_path)
         destination = self._resolve_path(command.new_path)
@@ -175,6 +184,7 @@ class MemoryTool(BetaAbstractMemoryTool):
         source.rename(destination)
         return f"Renamed {command.old_path} to {command.new_path}"
 
+    @override
     def clear_all_memory(self) -> str:
         if self._memory_root.exists():
             shutil.rmtree(self._memory_root)
@@ -196,7 +206,7 @@ class MemoryTool(BetaAbstractMemoryTool):
     def view_path(
         self,
         path: str,
-        view_range: Optional[Tuple[int, int]] = None,
+        view_range: tuple[int, int] | None = None,
     ) -> str:
         return self.view(
             BetaMemoryTool20250818ViewCommand(
@@ -251,12 +261,12 @@ class MemoryTool(BetaAbstractMemoryTool):
         except Exception as exc:  # pragma: no cover - defensive
             raise MemoryToolOperationError(f"failed to test {path}: {exc}") from exc
 
-    def list_memories(self, path: str = "/memories") -> List[str]:
+    def list_memories(self, path: str = "/memories") -> list[str]:
         target = self._resolve_path(path)
         if not target.is_dir():
             raise MemoryToolOperationError(f"path is not a directory: {path}")
 
-        results: List[str] = []
+        results: list[str] = []
         for item in sorted(target.rglob("*")):
             if item.name.startswith("."):
                 continue
@@ -270,7 +280,7 @@ class MemoryTool(BetaAbstractMemoryTool):
     def clear_all(self) -> None:
         self.clear_all_memory()
 
-    def stats(self) -> Dict[str, int]:
+    def stats(self) -> dict[str, int]:
         totals = {"files": 0, "directories": 0, "bytes": 0}
         if not self._memory_root.exists():
             return totals
@@ -287,7 +297,7 @@ class MemoryTool(BetaAbstractMemoryTool):
 
     def execute_tool_payload(self, payload: Mapping[str, object]) -> str:
         """Validate and execute a raw tool payload from Anthropic responses."""
-        command = self._COMMAND_ADAPTER.validate_python(payload)
+        command: BetaMemoryTool20250818Command = self._COMMAND_ADAPTER.validate_python(payload)
         result = self.execute(command)
         # Always return the string representation of the result
         return str(result)
@@ -301,7 +311,7 @@ class MemoryTool(BetaAbstractMemoryTool):
                 f"path must start with {self._NAMESPACE_PREFIX}: {memory_path}"
             )
 
-        relative_part = memory_path[len(self._NAMESPACE_PREFIX) :].lstrip("/")
+        relative_part = memory_path[len(self._NAMESPACE_PREFIX):].lstrip("/")
         base = self._memory_root if not relative_part else self._memory_root / relative_part
 
         try:
