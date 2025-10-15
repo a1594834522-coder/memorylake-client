@@ -23,11 +23,7 @@ import shutil
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Final
-
-try:
-    from typing import override
-except ImportError:  # pragma: no cover - Python < 3.12
-    from typing_extensions import override
+from typing_extensions import override
 
 from anthropic.lib.tools import BetaAbstractMemoryTool
 from anthropic.types.beta import (
