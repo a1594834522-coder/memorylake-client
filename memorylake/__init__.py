@@ -11,8 +11,9 @@ try:
         MemoryToolOperationError,
         MemoryToolPathError,
     )
-except ModuleNotFoundError as exc:
-    if exc.name and exc.name.startswith("anthropic"):
+except ImportError as exc:
+    error_context = exc.name or ""
+    if "anthropic" in error_context or "anthropic" in str(exc):
         _IMPORT_ERROR = exc
 
         def __getattr__(name: str):

@@ -3,7 +3,7 @@
 .vscode/
 
 # Ignore virtual environments
-/*venv/
+/*venv*/
 
 # Ignore caches, temp files, etc.
 __pycache__/
@@ -20,9 +20,10 @@ coverage.xml
 .coverage.*
 .run
 
-AGENTS.md
 
-.cursor/
+
+# Ignore logs
 .serena/
+AGENTS.md
 
 

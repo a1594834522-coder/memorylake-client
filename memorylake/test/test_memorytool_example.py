@@ -8,6 +8,21 @@ from typing import Any, ClassVar
 import pytest
 from pydantic import BaseModel, ConfigDict
 
+if sys.version_info < (3, 10):
+    from typing import Optional as _Optional
+
+    MaybeStr = _Optional[str]
+    MaybeInt = _Optional[int]
+    MaybeRange = _Optional[list[int]]
+    MaybeMapping = _Optional[Mapping[str, Any]]
+    MaybeSequence = _Optional[Sequence[str]]
+else:
+    MaybeStr = str | None
+    MaybeInt = int | None
+    MaybeRange = list[int] | None
+    MaybeMapping = Mapping[str, Any] | None
+    MaybeSequence = Sequence[str] | None
+
 if "anthropic" not in sys.modules:
     anthropic_module = types.ModuleType("anthropic")
     sys.modules["anthropic"] = anthropic_module
@@ -57,47 +72,47 @@ if "anthropic" not in sys.modules:
 
     class BetaMemoryTool20250818Command(BaseModel):
         command: str
-        path: str | None = None
-        file_text: str | None = None
-        insert_line: int | None = None
-        insert_text: str | None = None
-        old_str: str | None = None
-        new_str: str | None = None
-        old_path: str | None = None
-        new_path: str | None = None
-        view_range: list[int] | None = None
+        path: MaybeStr = None
+        file_text: MaybeStr = None
+        insert_line: MaybeInt = None
+        insert_text: MaybeStr = None
+        old_str: MaybeStr = None
+        new_str: MaybeStr = None
+        old_path: MaybeStr = None
+        new_path: MaybeStr = None
+        view_range: MaybeRange = None
 
         model_config: ClassVar[ConfigDict] = ConfigDict(extra="allow")
 
     class BetaMemoryTool20250818ViewCommand(BetaMemoryTool20250818Command):
         command: str = "view"
-        path: str | None = None
+        path: MaybeStr = None
 
     class BetaMemoryTool20250818CreateCommand(BetaMemoryTool20250818Command):
         command: str = "create"
-        path: str | None = None
-        file_text: str | None = None
+        path: MaybeStr = None
+        file_text: MaybeStr = None
 
     class BetaMemoryTool20250818StrReplaceCommand(BetaMemoryTool20250818Command):
         command: str = "str_replace"
-        path: str | None = None
-        old_str: str | None = None
-        new_str: str | None = None
+        path: MaybeStr = None
+        old_str: MaybeStr = None
+        new_str: MaybeStr = None
 
     class BetaMemoryTool20250818InsertCommand(BetaMemoryTool20250818Command):
         command: str = "insert"
-        path: str | None = None
-        insert_line: int | None = None
-        insert_text: str | None = None
+        path: MaybeStr = None
+        insert_line: MaybeInt = None
+        insert_text: MaybeStr = None
 
     class BetaMemoryTool20250818DeleteCommand(BetaMemoryTool20250818Command):
         command: str = "delete"
-        path: str | None = None
+        path: MaybeStr = None
 
     class BetaMemoryTool20250818RenameCommand(BetaMemoryTool20250818Command):
         command: str = "rename"
-        old_path: str | None = None
-        new_path: str | None = None
+        old_path: MaybeStr = None
+        new_path: MaybeStr = None
 
     anthropic_types_beta_any: Any = anthropic_types_beta_module
     anthropic_types_beta_any.BetaContentBlockParam = dict
@@ -223,9 +238,9 @@ def test_memorylake_init_missing_anthropic(monkeypatch: pytest.MonkeyPatch) -> N
 
     def fake_import(
         name: str,
-        globals: Mapping[str, Any] | None = None,
-        locals: Mapping[str, Any] | None = None,
-        fromlist: Sequence[str] | None = (),
+        globals: MaybeMapping = None,
+        locals: MaybeMapping = None,
+        fromlist: MaybeSequence = (),
         level: int = 0,
     ) -> Any:
         if name.startswith("anthropic"):
