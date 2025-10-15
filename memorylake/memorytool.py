@@ -23,7 +23,6 @@ import shutil
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Final
-from typing_extensions import override
 
 from anthropic.lib.tools import BetaAbstractMemoryTool
 from anthropic.types.beta import (
@@ -36,6 +35,7 @@ from anthropic.types.beta import (
     BetaMemoryTool20250818ViewCommand,
 )
 from pydantic import TypeAdapter
+from typing_extensions import override
 
 __all__ = ["MemoryTool", "MemoryToolError", "MemoryToolPathError", "MemoryToolOperationError"]
 
